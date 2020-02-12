@@ -1,0 +1,9 @@
+*.pyc
+*.pyo
+.*.swp
+*.so
+*.sqlite3
+.idea
+/build/
+/dist/
+/nexus_keycode.egg-info/
