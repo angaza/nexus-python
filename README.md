@@ -9,7 +9,7 @@ Learn more about about Angaza Nexus [here](https://angaza.github.io/nexus)!
 Nexus Keycode is available on PyPI. Installation is as simple as:
 
 ```shell
-pip install nexus_keycode
+pip install nexus-keycode
 ```
 
 This package comes with a full suite of unit tests, which you can run like so:
