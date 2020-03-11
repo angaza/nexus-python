@@ -4,7 +4,7 @@ import math
 import bitstring
 import siphash
 
-from utils import pseudorandom_bits
+from nexus_keycode.protocols.utils import pseudorandom_bits
 
 
 @enum.unique
