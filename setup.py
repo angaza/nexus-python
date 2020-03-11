@@ -7,15 +7,15 @@ setuptools.setup(
     name="nexus_keycode",
     packages=setuptools.find_packages(),
     license="MIT",
-    version="1.0.0",
+    version="1.0.1",
     author="Angaza, Inc.",
     author_email="iot@angaza.com",
     description="The Angaza Nexus Keycode for PAYG devices",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/angaza/nexus-keycode-python",
-    download_url="https://github.com/angaza/nexus-keycode-python/archive/v1.0.0.tar.gz",
-    install_reqiures=[
+    download_url="https://github.com/angaza/nexus-keycode-python/releases/download/1.0.1/nexus_keycode-1.0.1.tar.gz",
+    install_requires=[
         "bitstring>=3.0.2",
         "enum34==1.1.6",
         "nose2==0.9.2",
