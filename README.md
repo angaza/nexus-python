@@ -1,12 +1,16 @@
-# Nexus Keycode: Python
+# Nexus Keycode: Python (Preview Release)
 
 This package allows you to encode Nexus Keycodes.
+
+This is a preview release. We are working on polishing some of the rough edges in
+advance of a production-ready release at the end of Q1 2020. Most notably, this release
+currently only supports Python 2.
 
 Learn more about about Angaza Nexus [here](https://angaza.github.io/nexus)!
 
 ## Installation
 
-Nexus Keycode is available on PyPI. Installation is as simple as:
+Nexus Keycode will be available on PyPI. Installation will be as simple as:
 
 ```shell
 pip install nexus-keycode
