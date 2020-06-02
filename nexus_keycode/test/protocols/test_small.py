@@ -125,62 +125,6 @@ class TestAddCreditSmallMessage(TestCase):
         self.assertEqual("134 435 355 535 552", message.to_keycode())
 
 
-class TestUpdateCreditSmallMessage(TestCase):
-    def test_init__invalid_days__raises(self):
-        self.assertRaises(
-            ValueError,
-            protocol.UpdateCreditSmallMessage,
-            id_=0,
-            days=1217,
-            secret_key="\xab" * 16,
-        )
-
-    def test_compressed_message_bits__update_1_day__output_correct(self):
-        message = protocol.UpdateCreditSmallMessage(
-            id_=0, days=1, secret_key="\xab" * 16
-        )
-        self.assertEqual(
-            message.compressed_message_bits[0:16].bin, "000000" + "01" + "00000000"
-        )
-        self.assertEqual("123 254 355 424 442", message.to_keycode())
-
-    def test_compressed_message_bits__update_92_day__output_correct(self):
-        message = protocol.UpdateCreditSmallMessage(
-            id_=1, days=92, secret_key="\xab" * 16
-        )
-        self.assertEqual(
-            message.compressed_message_bits[0:16].bin, "000001" + "01" + "01011010"
-        )
-        self.assertEqual("142 323 243 545 433", message.to_keycode())
-
-    def test_compressed_message_bits__update_360_day__output_correct(self):
-        message = protocol.UpdateCreditSmallMessage(
-            id_=123, days=360, secret_key="\xab" * 16
-        )
-        self.assertEqual(
-            message.compressed_message_bits[0:16].bin, "111011" + "01" + "10110011"
-        )
-        self.assertEqual("123 353 434 332 544", message.to_keycode())
-
-    def test_compressed_message_bits__update_435_day__output_correct(self):
-        message = protocol.UpdateCreditSmallMessage(
-            id_=100, days=435, secret_key="\xab" * 16
-        )
-        self.assertEqual(
-            message.compressed_message_bits[0:16].bin, "100100" + "01" + "10111101"
-        )
-        self.assertEqual("152 343 325 234 522", message.to_keycode())
-
-    def test_compressed_message_bits__update_1216_day__output_correct(self):
-        message = protocol.UpdateCreditSmallMessage(
-            id_=506, days=1216, secret_key="\xab" * 16
-        )
-        self.assertEqual(
-            message.compressed_message_bits[0:16].bin, "111010" + "01" + "11111111"
-        )
-        self.assertEqual("144 554 432 332 432", message.to_keycode())
-
-
 class TestSetCreditSmallMessage(TestCase):
     def test_init__invalid_days__raises(self):
         self.assertRaises(
