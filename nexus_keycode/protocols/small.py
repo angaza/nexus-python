@@ -10,7 +10,7 @@ from nexus_keycode.protocols.utils import pseudorandom_bits
 @enum.unique
 class SmallMessageType(enum.Enum):
     ADD_CREDIT = 0
-    UPDATE_CREDIT = 1
+    _RESERVED = 1
     SET_CREDIT = 2
     MAINTENANCE_TEST = 3
 
@@ -31,10 +31,11 @@ class SmallMessage(object):
 
     There are four types of small protocol messages, determined by the message
     type code field:
-        * Credit messages - message type codes 0, 1, 2
+        * Credit messages - message type codes 0, 2
         * Maintenance/Test messages - message type code 3
+        * Message type code 1 is reserved for future use
 
-    Messages with type codes 0, 1, 2 (i.e., credit messages) may be applied
+    Messages with type codes 0 and 2 (i.e., credit messages) may be applied
     exactly once to a given product over the lifetime of that product.  There
     is no restriction on the number of times Maintenance and Test messages may
     be applied.
@@ -255,36 +256,6 @@ class AddCreditSmallMessage(SmallMessage):
         else:
             raise ValueError("unsupported number of days")
         return increment_id
-
-
-class UpdateCreditSmallMessage(SmallMessage):
-    def __init__(self, id_, days, secret_key):
-        super(UpdateCreditSmallMessage, self).__init__(
-            id_=id_,
-            message_type=SmallMessageType.UPDATE_CREDIT,
-            body=UpdateCreditSmallMessage.generate_body(days),
-            secret_key=secret_key,
-        )
-
-    @classmethod
-    def generate_body(cls, days):
-        if 1 <= days <= 90:
-            increment_id = days - 1
-        elif 91 <= days <= 180:
-            increment_id = (days - 91) / 2 + 90
-        elif 181 <= days <= 360:
-            increment_id = (days - 181) / 4 + 135
-        elif 361 <= days <= 720:
-            increment_id = (days - 361) / 8 + 180
-        elif 721 <= days <= 1216:
-            increment_id = (days - 721) / 16 + 225
-        elif days == cls.UNLOCK_FLAG:
-            raise ValueError("unlock is supported via add or set credit")
-        else:
-            raise ValueError("unsupported number of days")
-        body_bits = (1 << 8) | increment_id
-        # Throw away the identifier on the body MSB that makes it 9 bits.
-        return body_bits & 0xFF
 
 
 class PossibleMessageCollisionError(ValueError):
