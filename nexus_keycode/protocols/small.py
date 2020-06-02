@@ -10,7 +10,7 @@ from nexus_keycode.protocols.utils import pseudorandom_bits
 @enum.unique
 class SmallMessageType(enum.Enum):
     ADD_CREDIT = 0
-    _RESERVED = 1
+    # _RESERVED = 1
     SET_CREDIT = 2
     MAINTENANCE_TEST = 3
 
