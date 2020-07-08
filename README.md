@@ -2,9 +2,8 @@
 
 This package allows you to encode Nexus Keycodes.
 
-This is a preview release. We are working on polishing some of the rough edges in
-advance of a production-ready release at the end of Q1 2020. Most notably, this release
-currently only supports Python 2.
+This is an early release. Some rough edges do exist. Most notably, only
+Python 2 is currently supported.
 
 Learn more about about Angaza Nexus [here](https://angaza.github.io/nexus)!
 
@@ -30,7 +29,7 @@ number is comprised of three components: MAJOR.MINOR.PATCH
 Major version numbers represent breaking changes in the keycode protocol
 itself. This is the only version number that is relevant to keycodes
 themselves. For example, any keycode generated any version 1.X.Y of this
-encoder will be valid on any version 1.X.Y of the [embedded decoder](https://github.com/angaza/nexus-keycode-embedded).
+encoder will be valid on any version 1.X.Y of the [embedded decoder](https://github.com/angaza/nexus-embedded).
 
 Minor version numbers represent breaking internal API changes. You may need
 to modify your code to accomodate these changes.
