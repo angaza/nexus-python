@@ -77,20 +77,25 @@ class BaseFullMessage(object):
 
     def __init__(self, full_id, message_type, body, secret_key, is_factory):
         """
+        Secret key provided must be pseudorandom, the first 16 bytes (if
+        provided key is longer than 16 bytes) is used for a hashing operation
+        which requires a key of exactly 16 bytes/128-bits.
+
         :param full_id: unsigned integer message ID < UINT32_MAX (0xFFFFFFFF)
         :type full_id: :class:`int`
         :param message_type: integer value for the message type
         :type message_type: :class:`FullMessageType`
         :param body: arbitrary digits of message body
         :type body: :class:`str`
-        :param secret_key: secret hash key (16 bytes)
+        :param secret_key: secret hash key (requires 16 bytes, uses first 16)
         :type secret_key: `str`
         """
 
         if message_type not in [e for e in FullMessageType]:
             raise ValueError("unsupported credit message type code")
 
-        self.secret_key = secret_key
+        # Siphash requires a 16-byte input key.
+        self.secret_key = secret_key[:16]
         self.is_factory = is_factory
 
         self.full_id = full_id
