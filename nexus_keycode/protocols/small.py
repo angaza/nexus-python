@@ -46,7 +46,10 @@ class SmallMessage(object):
     def __init__(self, id_, message_type, body, secret_key):
         """
         Create a message per the small protocol.  Such messages are
-        15 digits long (when represented as decimal).
+        15 digits long (when represented as decimal). Secret key provided
+        must be pseudorandom, the first 16 bytes (if provided key is longer
+        than 16 bytes) is used for a hashing operation which requires a key
+        of exactly 16 bytes/128-bits.
 
         :param id_: *Expanded* message ID number for this message (0-4 billion)
         :type id_: `int`
@@ -54,7 +57,7 @@ class SmallMessage(object):
         :type message_type: :class:`SmallMessageType`
         :param body: integer representation of 8-bit body
         :type body: `int`
-        :param secret_key: secret hash key (16 bytes, ex '\xff' * 16)
+        :param secret_key: secret hash key (requires 16 bytes, uses first 16)
         :type secret_key: `str`
         """
 
@@ -68,7 +71,8 @@ class SmallMessage(object):
         self.message_type = message_type
         self.body = body
 
-        mac_bits = self._generate_mac_bits(secret_key)
+        # Siphash requires a 16-byte input key.
+        mac_bits = self._generate_mac_bits(secret_key[:16])
 
         # LSB 6 bits = 0x3F
         compressed_id = self.id_ & 0x3F

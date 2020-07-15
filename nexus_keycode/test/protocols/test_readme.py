@@ -11,7 +11,6 @@ from nexus_keycode.protocols.small import (
     MaintenanceSmallMessageType,
     SetCreditSmallMessage,
     UnlockSmallMessage,
-    UpdateCreditSmallMessage,
 )
 
 
@@ -55,10 +54,6 @@ class TestREADME(TestCase):
     def test_add_credit__small__ok(self):
         message = AddCreditSmallMessage(id_=42, days=7, secret_key=self.SECRET_KEY)
         self.assertEqual("135 242 422 455 244", message.to_keycode())
-
-    def test_update_credit__small__ok(self):
-        message = UpdateCreditSmallMessage(id_=43, days=14, secret_key=self.SECRET_KEY)
-        self.assertEqual("145 222 453 233 453", message.to_keycode())
 
     def test_set_credit__small__ok(self):
         message = SetCreditSmallMessage(id_=44, days=10, secret_key=self.SECRET_KEY)

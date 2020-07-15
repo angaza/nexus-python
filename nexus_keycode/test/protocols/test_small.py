@@ -217,10 +217,39 @@ class TestSmallMessage(TestCase):
             secret_key="\xff" * 16,
         )
 
+    def test_init__long_key_inputs_accepted__uses_siphash_required_bytes(self):
+        xmessage = protocol.SmallMessage(
+            343,
+            protocol.SmallMessageType.ADD_CREDIT,
+            20,
+            b"\xfb\x00\xa5\x98" * 4
+        )
+        ymessage = protocol.SmallMessage(
+            343,
+            protocol.SmallMessageType.ADD_CREDIT,
+            20,
+            b"\xfb\x00\xa5\x98" * 4 + b"\x02\x03\x04\x05" * 4
+        )
+        self.assertEqual(str(xmessage), str(ymessage))
+        self.assertEqual(repr(xmessage), repr(ymessage))
+        self.assertEqual(xmessage.to_keycode(), ymessage.to_keycode())
+
     def test_repr__simple_message__expected_snippets_present(self):
         repred = repr(
             protocol.SmallMessage(
-                100, protocol.SmallMessageType.UPDATE_CREDIT, 10, "\xff" * 16
+                100, protocol.SmallMessageType.ADD_CREDIT, 10, "\xff" * 16
+            )
+        )
+        self.assertIn("SmallMessage", repred)
+        repred = repr(
+            protocol.SmallMessage(
+                100, protocol.SmallMessageType.SET_CREDIT, 10, "\xff" * 16
+            )
+        )
+        self.assertIn("SmallMessage", repred)
+        repred = repr(
+            protocol.SmallMessage(
+                100, protocol.SmallMessageType.MAINTENANCE_TEST, 10, "\xff" * 16
             )
         )
         self.assertIn("SmallMessage", repred)

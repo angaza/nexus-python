@@ -8,16 +8,36 @@ class TestBaseFullMessage(TestCase):
         full_id=1223,  # LSB 6 Message ID = Dec 7
         message_type=protocol.FullMessageType.ADD_CREDIT,
         body="00993",
-        secret_key="\xab" * 16,
+        secret_key=b"\xab" * 16,
         is_factory=False,
     )
     fmessage = protocol.BaseFullMessage(
         full_id=0,
         message_type=protocol.FullMessageType.FACTORY_ALLOW_TEST,
         body="",
-        secret_key="\x00" * 16,
+        secret_key=b"\x00" * 16,
         is_factory=True,
     )
+
+    def test_init__long_key_inputs_accepted__uses_siphash_required_bytes(self):
+        xmessage = protocol.BaseFullMessage(
+            full_id=343,
+            message_type=protocol.FullMessageType.ADD_CREDIT,
+            body="00993",
+            secret_key=b"\xfb\x00\xa5\x98" * 4,
+            is_factory=False,
+        )
+        ymessage = protocol.BaseFullMessage(
+            full_id=343,
+            message_type=protocol.FullMessageType.ADD_CREDIT,
+            body="00993",
+            secret_key=b"\xfb\x00\xa5\x98" * 4 + b"\x02\x03\x04\x05" * 4,
+            is_factory=False,
+        )
+
+        self.assertEqual(str(xmessage), str(ymessage))
+        self.assertEqual(repr(xmessage), repr(ymessage))
+        self.assertEqual(xmessage.to_keycode(), ymessage.to_keycode())
 
     def test_str__simple_message__expected_value_returned(self):
         self.assertEqual("*007 009 936 639 04#", str(self.amessage))
