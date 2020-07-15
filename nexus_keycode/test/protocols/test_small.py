@@ -220,7 +220,19 @@ class TestSmallMessage(TestCase):
     def test_repr__simple_message__expected_snippets_present(self):
         repred = repr(
             protocol.SmallMessage(
-                100, protocol.SmallMessageType.UPDATE_CREDIT, 10, "\xff" * 16
+                100, protocol.SmallMessageType.ADD_CREDIT, 10, "\xff" * 16
+            )
+        )
+        self.assertIn("SmallMessage", repred)
+        repred = repr(
+            protocol.SmallMessage(
+                100, protocol.SmallMessageType.SET_CREDIT, 10, "\xff" * 16
+            )
+        )
+        self.assertIn("SmallMessage", repred)
+        repred = repr(
+            protocol.SmallMessage(
+                100, protocol.SmallMessageType.MAINTENANCE_TEST, 10, "\xff" * 16
             )
         )
         self.assertIn("SmallMessage", repred)
