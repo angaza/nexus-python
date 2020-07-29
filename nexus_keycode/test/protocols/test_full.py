@@ -116,7 +116,7 @@ class TestBaseFullMessage(TestCase):
 
 class TestFullMessage(TestCase):
     def setUp(self):
-        self.secret_key = "\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6"
+        self.secret_key = b"\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6"
 
     def test_add_credit__ok(self):
         msg = protocol.FullMessage.add_credit(42, 24 * 7, self.secret_key)
@@ -222,7 +222,7 @@ class TestFullMessage(TestCase):
 
 class TestFactoryFullMessage(TestCase):
     def setUp(self):
-        self.secret_key = "\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6"
+        self.secret_key = b"\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6"
 
     def test_allow_test__verify_output__ok(self):
         msg = protocol.FactoryFullMessage.allow_test()

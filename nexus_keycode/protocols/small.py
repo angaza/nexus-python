@@ -141,7 +141,7 @@ class SmallMessage(object):
 
         The rendered message can be transferred to a human. For example:
 
-        >>> message = SmallMessage(33, SmallMessageType.ADD_CREDIT, 10, "\x00" * 16)
+        >>> message = SmallMessage(33, SmallMessageType.ADD_CREDIT, 10, b"\00" * 16)
         >>> message.to_keycode(prefix="4", separator="-")
         '422-112-100-002-232'
 
@@ -159,13 +159,15 @@ class SmallMessage(object):
         :rtype: :class:`str`
         """
 
-        key_dict = key_dict or {0: "2", 1: "3", 2: "4", 3: "5"}
+        key_dict_confirmed = (
+            key_dict if key_dict is not None else {0: "2", 1: "3", 2: "4", 3: "5"}
+        )
 
         # ensure provided values are suitable for small protocol messages
         if len(prefix) < 1:
             raise ValueError("Prefix key is required.")
         for key in range(0, 4):
-            if key not in key_dict:
+            if key not in key_dict_confirmed:
                 raise KeyError("Require dict keys for [0, 1, 2, 3]")
 
         output_message_bits = self.compressed_message_bits
@@ -176,7 +178,7 @@ class SmallMessage(object):
         keycode = self._bits_to_digits(output_message_bits)
 
         # Map each character in keycode to desired output
-        keycode = prefix + "".join(map(lambda x: key_dict[int(x)], keycode))
+        keycode = prefix + "".join(map(lambda x: key_dict_confirmed[int(x)], keycode))
 
         keycode = separator.join(
             keycode[i * group_len : (i + 1) * group_len]
@@ -185,7 +187,7 @@ class SmallMessage(object):
 
         return keycode
 
-    def _generate_mac_bits(self, secret_key):
+    def _generate_mac_bits(self, secret_key: bytes):
         """Compute the internal truncated MAC bits for this message.
 
         Generate a MAC for this message using the specified secret key.  The
@@ -195,22 +197,22 @@ class SmallMessage(object):
 
         MAC is generated using message ID, type code, and body byte.
 
-        :param secret_key: 16-byte secret key, e.g. "\xff" * 16
-        :type secret_key: `str`
+        :param secret_key: 16-byte secret key, e.g. b"\xff" * 16
+        :type secret_key: `bytes`
         :return: bitstream-packed form of the MAC generated using secret_key.
         :rtype: :class:`bitstring`
         """
 
         # the hash is computed over a struct representation of the message,
         # struct { uint32_t message_id (LE); uint8_t message_type, uint8_t body }
-        structed = "".join(
+        structed = bytes(
             [
-                chr(self.id_ & 0xFF),
-                chr((self.id_ & 0x0000FF00) >> 8),
-                chr((self.id_ & 0x00FF0000) >> 16),
-                chr(self.id_ >> 24),
-                chr(self.message_type.value),
-                chr(self.body),
+                (self.id_ & 0xFF),
+                ((self.id_ & 0x0000FF00) >> 8),
+                ((self.id_ & 0x00FF0000) >> 16),
+                (self.id_ >> 24),
+                (self.message_type.value),
+                (self.body),
             ]
         )
 
@@ -251,15 +253,18 @@ class AddCreditSmallMessage(SmallMessage):
 
     @classmethod
     def generate_body(cls, days):
-        if 1 <= days <= 180:
-            increment_id = days - 1
-        elif 181 <= days <= cls.MAX_ADD_CREDIT_DAYS:
-            increment_id = ((days - 181) / cls.COARSE_DAYS_PER_INCREMENT_ID) + 180
+        if isinstance(days, int):
+            if 1 <= days <= 180:
+                increment_id = days - 1
+            elif 181 <= days <= cls.MAX_ADD_CREDIT_DAYS:
+                increment_id = ((days - 181) // cls.COARSE_DAYS_PER_INCREMENT_ID) + 180
+            else:
+                raise ValueError("unsupported number of days")
+            return increment_id
         elif days == cls.UNLOCK_FLAG:
-            increment_id = 255
+            return 255
         else:
-            raise ValueError("unsupported number of days")
-        return increment_id
+            raise ValueError("invalid days value")
 
 
 class PossibleMessageCollisionError(ValueError):
@@ -286,23 +291,26 @@ class SetCreditSmallMessage(SmallMessage):
         )
 
     def _generate_body(self, days):
-        if 1 <= days <= 90:
-            increment_id = days - 1
-        elif 91 <= days <= 180:
-            increment_id = (days - 91) / 2 + 90
-        elif 181 <= days <= 360:
-            increment_id = (days - 181) / 4 + 135
-        elif 361 <= days <= 720:
-            increment_id = (days - 361) / 8 + 180
-        elif 721 <= days <= 1184:
-            increment_id = (days - 721) / 16 + 225
-        elif days == 0:  # lock device
-            increment_id = 254
+        if isinstance(days, int):
+            if 1 <= days <= 90:
+                increment_id = days - 1
+            elif 91 <= days <= 180:
+                increment_id = (days - 91) // 2 + 90
+            elif 181 <= days <= 360:
+                increment_id = (days - 181) // 4 + 135
+            elif 361 <= days <= 720:
+                increment_id = (days - 361) // 8 + 180
+            elif 721 <= days <= 1184:
+                increment_id = (days - 721) // 16 + 225
+            elif days == 0:  # lock device
+                increment_id = 254
+            else:
+                raise ValueError("unsupported number of days")
+            return increment_id
         elif days == self.UNLOCK_FLAG:
-            increment_id = 255
+            return 255
         else:
-            raise ValueError("unsupported number of days")
-        return increment_id
+            raise ValueError("invalid days value")
 
 
 class UnlockSmallMessage(AddCreditSmallMessage):
@@ -358,5 +366,5 @@ class TestSmallMessage(SmallMessage):
             id_=0,
             message_type=SmallMessageType.MAINTENANCE_TEST,
             body=type_.value,
-            secret_key="\xff" * 16,
+            secret_key=b"\xff" * 16,
         )

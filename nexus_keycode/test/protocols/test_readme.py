@@ -15,7 +15,7 @@ from nexus_keycode.protocols.small import (
 
 
 class TestREADME(TestCase):
-    SECRET_KEY = "\xde\xad\xbe\xef" * 4
+    SECRET_KEY = b"\xde\xad\xbe\xef" * 4
 
     def test_add_credit__full__ok(self):
         message = FullMessage.add_credit(

@@ -43,7 +43,7 @@ Generate keycodes for the full and small keypad protocols.
 Add Credit
 
 ```python
-secret_key = "\xde\xad\xbe\xef" * 4
+secret_key = b"\xde\xad\xbe\xef" * 4
 message = FullMessage.add_credit(
     id_=42, hours=24 * 7, secret_key=secret_key
 ).to_keycode()
@@ -97,7 +97,7 @@ message = FactoryFullMessage.display_payg_id().to_keycode()
 Add Credit
 
 ```python
-SECRET_KEY = "\xde\xad\xbe\xef" * 4
+SECRET_KEY = b"\xde\xad\xbe\xef" * 4
 AddCreditSmallMessage(id_=42, days=7, secret_key=secret_key).to_keycode()
 # outputs 135 242 422 455 244
 ```

@@ -4,7 +4,7 @@ import bitstring
 import siphash
 
 
-def pseudorandom_bits(seed_bits, output_len):
+def pseudorandom_bits(seed_bits: bitstring.Bits, output_len: int) -> bitstring.Bits:
     """Given some bits, compute arbitrarily many new pseudorandom bits.
 
     This routine provides a deterministic source of pseudorandom bits from a
@@ -30,10 +30,10 @@ def pseudorandom_bits(seed_bits, output_len):
     seed = (pad_bits + seed_bits).bytes
 
     # compute random bits
-    fixed_key = "\x00" * 16  # arbitrary, but affects output
+    fixed_key = b"\x00" * 16  # arbitrary, but affects output
 
     def chunk(iteration):
-        hash_function = siphash.SipHash_2_4(fixed_key, chr(iteration) + seed)
+        hash_function = siphash.SipHash_2_4(fixed_key, bytes([iteration]) + seed)
 
         return bitstring.pack("uintle:64", hash_function.hash())
 
