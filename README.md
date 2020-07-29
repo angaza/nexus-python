@@ -1,9 +1,7 @@
-# Nexus Keycode: Python (Preview Release)
+# Nexus Python
 
-This package allows you to encode Nexus Keycodes.
-
-This is an early release. Some rough edges do exist. Most notably, only
-Python 2 is currently supported.
+This repository contains server-side code for managing devices using Nexus
+protocols, including Nexus Keycode.
 
 Learn more about about Angaza Nexus [here](https://angaza.github.io/nexus)!
 
