@@ -194,7 +194,7 @@ class TestSmallMessage(TestCase):
 
     def test_to_keycode__with_simple_message___expected_value_returned(self):
         message = protocol.SmallMessage(
-            100, protocol.SmallMessageType.ADD_CREDIT, 10, b"\ff" * 16
+            100, protocol.SmallMessageType.ADD_CREDIT, 10, b"\xff" * 16
         )
         self.assertEqual(
             "430 202 200 300 100",
@@ -206,7 +206,7 @@ class TestSmallMessage(TestCase):
 
     def test_str__with_simple_message___expected_value_returned(self):
         message = protocol.SmallMessage(
-            100, protocol.SmallMessageType.ADD_CREDIT, 10, b"\ff" * 16
+            100, protocol.SmallMessageType.ADD_CREDIT, 10, b"\xff" * 16
         )
         self.assertEqual("152 424 422 522 322", str(message))
 
