@@ -141,7 +141,7 @@ class SmallMessage(object):
 
         The rendered message can be transferred to a human. For example:
 
-        >>> message = SmallMessage(33, SmallMessageType.ADD_CREDIT, 10, b"\00" * 16)
+        >>> message = SmallMessage(33, SmallMessageType.ADD_CREDIT, 10, b"\x00" * 16)
         >>> message.to_keycode(prefix="4", separator="-")
         '422-112-100-002-232'
 

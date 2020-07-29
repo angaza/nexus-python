@@ -162,7 +162,7 @@ class BaseFullMessage(object):
 
         The rendered message can be transferred to a human. For example:
 
-        >>> message = BaseFullMessage("0" * 4, "1" * 8, b"\00" * 16)
+        >>> message = BaseFullMessage("0" * 4, "1" * 8, b"\x00" * 16)
         >>> message.to_keycode(prefix="*", suffix="#", separator="-")
         '*815-335-269-161-611-719#'
 
