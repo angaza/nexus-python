@@ -4,7 +4,7 @@ import math
 import bitstring
 import siphash
 
-from nexus_keycode.protocols.utils import pseudorandom_bits
+from nexus_keycode.protocols.utils import ints_to_bytes, pseudorandom_bits
 
 
 @enum.unique
@@ -187,7 +187,7 @@ class SmallMessage(object):
 
         return keycode
 
-    def _generate_mac_bits(self, secret_key: bytes):
+    def _generate_mac_bits(self, secret_key):
         """Compute the internal truncated MAC bits for this message.
 
         Generate a MAC for this message using the specified secret key.  The
@@ -205,7 +205,7 @@ class SmallMessage(object):
 
         # the hash is computed over a struct representation of the message,
         # struct { uint32_t message_id (LE); uint8_t message_type, uint8_t body }
-        structed = bytes(
+        structed = ints_to_bytes(
             [
                 (self.id_ & 0xFF),
                 ((self.id_ & 0x0000FF00) >> 8),
