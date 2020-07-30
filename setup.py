@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nexus_keycode",
-    packages=setuptools.find_packages(),
+    packages=["nexus_keycode"],
     license="MIT",
     version="2.0.0",
     author="Angaza, Inc.",
@@ -14,8 +14,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/angaza/nexus-python",
-    download_url="https://github.com/angaza/nexus-python/releases/download/2.0.0/nexus-2.0.0.tar.gz",
-    install_requires=["bitstring>=3.0.2", "siphash==0.0.1",],
+    download_url="https://github.com/angaza/nexus-python/releases/download/2.0.0/nexus_keycode-2.0.0.tar.gz",
+    install_requires=["bitstring>=3.0.2", "siphash==0.0.1"],
     test_suite="nose2.collector",
     include_package_data=True,
     classifiers=[
@@ -23,7 +23,8 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
     ],
-    python_requires=">=3.6",
+    python_requires="~=2.7, ~=3.6",
 )
