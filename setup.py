@@ -26,5 +26,5 @@ setuptools.setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
     ],
-    python_requires="~=2.7, >=3.6",
+    python_requires=">=2.7",
 )
