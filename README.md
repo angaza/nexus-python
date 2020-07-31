@@ -1,9 +1,7 @@
-# Nexus Keycode: Python (Preview Release)
+# Nexus Python
 
-This package allows you to encode Nexus Keycodes.
-
-This is an early release. Some rough edges do exist. Most notably, only
-Python 2 is currently supported.
+This repository contains server-side code for managing devices using Nexus
+protocols, including Nexus Keycode.
 
 Learn more about about Angaza Nexus [here](https://angaza.github.io/nexus)!
 
@@ -45,7 +43,7 @@ Generate keycodes for the full and small keypad protocols.
 Add Credit
 
 ```python
-secret_key = "\xde\xad\xbe\xef" * 4
+secret_key = b"\xde\xad\xbe\xef" * 4
 message = FullMessage.add_credit(
     id_=42, hours=24 * 7, secret_key=secret_key
 ).to_keycode()
@@ -99,7 +97,7 @@ message = FactoryFullMessage.display_payg_id().to_keycode()
 Add Credit
 
 ```python
-SECRET_KEY = "\xde\xad\xbe\xef" * 4
+SECRET_KEY = b"\xde\xad\xbe\xef" * 4
 AddCreditSmallMessage(id_=42, days=7, secret_key=secret_key).to_keycode()
 # outputs 135 242 422 455 244
 ```

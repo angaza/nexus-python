@@ -1,7 +1,24 @@
 import math
+import sys
 
 import bitstring
 import siphash
+
+
+def int_to_bytes(int):
+    py_ver = sys.version_info
+    if py_ver < (3, 0):
+        return chr(int)
+    else:
+        return bytes([int])
+
+
+def ints_to_bytes(ints):
+    py_ver = sys.version_info
+    if py_ver < (3, 0):
+        return "".join([chr(i) for i in ints])
+    else:
+        return bytes(ints)
 
 
 def pseudorandom_bits(seed_bits, output_len):
@@ -30,10 +47,10 @@ def pseudorandom_bits(seed_bits, output_len):
     seed = (pad_bits + seed_bits).bytes
 
     # compute random bits
-    fixed_key = "\x00" * 16  # arbitrary, but affects output
+    fixed_key = b"\x00" * 16  # arbitrary, but affects output
 
     def chunk(iteration):
-        hash_function = siphash.SipHash_2_4(fixed_key, chr(iteration) + seed)
+        hash_function = siphash.SipHash_2_4(fixed_key, int_to_bytes(iteration) + seed)
 
         return bitstring.pack("uintle:64", hash_function.hash())
 
