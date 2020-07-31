@@ -21,18 +21,19 @@ nose2
 
 ## Versioning
 
+### Package Version
+
 This package uses a form of [semantic versioning](semver.org). The version
 number is comprised of three components: MAJOR.MINOR.PATCH
 
-Major version numbers represent breaking changes in the keycode protocol
-itself. This is the only version number that is relevant to keycodes
-themselves. For example, any keycode generated any version 1.X.Y of this
-encoder will be valid on any version 1.X.Y of the [embedded decoder](https://github.com/angaza/nexus-embedded).
+Major version numbers represent breaking internal API changes. You may need
+to modify your code to accomodate these changes. Minor version numbers
+represent feature additions or changes that do not break the library's API,
+and are fully backward compatible. Patch version numbers represent bug fixes
+or minor changes that do not add additional functionality.
 
-Minor version numbers represent breaking internal API changes. You may need
-to modify your code to accomodate these changes.
-
-Patch version numbers represent changes that are fully backward compatible.
+The package version is independent of the Nexus System Version that the
+package supports.
 
 ## Usage
 
