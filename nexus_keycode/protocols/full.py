@@ -86,9 +86,9 @@ class BaseFullMessage(object):
         :param message_type: integer value for the message type
         :type message_type: :class:`FullMessageType`
         :param body: arbitrary digits of message body
-        :type body: :class:`str`
+        :type body: :class:`bytes`
         :param secret_key: secret hash key (requires 16 bytes, uses first 16)
-        :type secret_key: `str`
+        :type secret_key: `bytes`
         """
 
         if message_type not in [e for e in FullMessageType]:
