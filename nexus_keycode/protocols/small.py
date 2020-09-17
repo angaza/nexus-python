@@ -300,7 +300,7 @@ class SetCreditSmallMessage(SmallMessage):
                 increment_id = (days - 181) // 4 + 135
             elif 361 <= days <= 720:
                 increment_id = (days - 361) // 8 + 180
-            elif 721 <= days <= 1184:
+            elif 721 <= days <= 960:
                 increment_id = (days - 721) // 16 + 225
             elif days == 0:  # lock device
                 increment_id = 254
@@ -311,6 +311,40 @@ class SetCreditSmallMessage(SmallMessage):
             return 255
         else:
             raise ValueError("invalid days value")
+
+
+@enum.unique
+class CustomCommandSmallMessageType(enum.Enum):
+    """ Values are the increment_id used by this custom command type. """
+    # Flags 240-253 are reserved for custom commands.
+    WIPE_RESTRICTED_FLAG = 253
+
+
+class CustomCommandSmallMessage(SmallMessage):
+    """Implemented as a SET_CREDIT message with specific increment_id values"""
+    def __init__(self, id_, type_, secret_key):
+        if type_ not in CustomCommandSmallMessageType:
+            raise ValueError("unsupported value for 'type_'")
+
+        super(CustomCommandSmallMessage, self).__init__(
+            id_=id_,
+            message_type=SmallMessageType.SET_CREDIT,
+            body=self._generate_body(type_),
+            secret_key=secret_key
+        )
+
+    @staticmethod
+    def _generate_body(type_):
+        if type_ == CustomCommandSmallMessageType.WIPE_RESTRICTED_FLAG:
+            increment_id = type_.value
+        else:
+            raise ValueError("Custom command type unknown")
+
+        # We should never reach here, as type is checked above
+        if increment_id < 240 or increment_id > 253:
+            raise ValueError("increment_id invalid/used by SET_CREDIT")
+
+        return increment_id
 
 
 class UnlockSmallMessage(AddCreditSmallMessage):
