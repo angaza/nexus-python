@@ -323,7 +323,10 @@ class CustomCommandSmallMessageType(enum.Enum):
 class CustomCommandSmallMessage(SmallMessage):
     """Implemented as a SET_CREDIT message with specific increment_id values"""
     def __init__(self, id_, type_, secret_key):
-        if type_ not in CustomCommandSmallMessageType:
+        if (
+            not isinstance(type_, CustomCommandSmallMessageType) or
+            type_ not in CustomCommandSmallMessageType
+        ):
             raise ValueError("unsupported value for 'type_'")
 
         super(CustomCommandSmallMessage, self).__init__(
