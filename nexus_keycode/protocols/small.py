@@ -6,6 +6,7 @@ import siphash
 
 from nexus_keycode.protocols.utils import ints_to_bytes, pseudorandom_bits
 
+NEXUS_MODULE_VERSION_STRING = "1.1.0"
 
 @enum.unique
 class SmallMessageType(enum.Enum):

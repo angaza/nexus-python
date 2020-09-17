@@ -6,6 +6,7 @@ import siphash
 
 from nexus_keycode.protocols.utils import pseudorandom_bits
 
+NEXUS_MODULE_VERSION_STRING = "1.0.0"
 
 @enum.unique
 class FullMessageWipeFlags(enum.Enum):
