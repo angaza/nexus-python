@@ -151,6 +151,15 @@ class TestSetCreditSmallMessage(TestCase):
         )
         self.assertEqual("124 445 543 325 325", message.to_keycode())
 
+    def test_compressed_message_bits__set_960_day_message__output_correct(self):
+        message = protocol.SetCreditSmallMessage(
+            id_=1, days=960, secret_key=b"\xab" * 16
+        )
+        self.assertEqual(
+            message.compressed_message_bits[0:16].bin, "000001" + "10" + "11101111"
+        )
+        self.assertEqual("152 523 424 453 432", message.to_keycode())
+
     def test_compressed_message_bits__set_lock_message__output_correct(self):
         message = protocol.SetCreditSmallMessage(
             id_=1542, days=0, secret_key=b"\xab" * 16
