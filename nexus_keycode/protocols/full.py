@@ -6,13 +6,14 @@ import siphash
 
 from nexus_keycode.protocols.utils import pseudorandom_bits
 
+NEXUS_MODULE_VERSION_STRING = "1.0.0"
 
 @enum.unique
 class FullMessageWipeFlags(enum.Enum):
     TARGET_FLAGS_0 = 0  #: Wipe state, except for recvd-msgs bitmask
     TARGET_FLAGS_1 = 1  #: Wipe state, including recvd-msgs bitmask
     WIPE_IDS_ALL = 2  #: Clear device recvd-msgs bitmask (no ACE modification)
-    RESERVED = 3
+    WIPE_RESTRICTED_FLAG = 3  #: Clear device 'restricted' flag (app specific)
 
 
 @enum.unique
@@ -307,8 +308,6 @@ class FullMessage(BaseFullMessage):
         """
         if flags not in [e for e in FullMessageWipeFlags]:
             raise ValueError("unsupported wipe flag")
-        if flags == FullMessageWipeFlags.RESERVED:
-            raise ValueError("reserved is unsupported for wipe flags")
 
         return cls(
             full_id=id_,

@@ -131,7 +131,7 @@ class TestSetCreditSmallMessage(TestCase):
             ValueError,
             protocol.SetCreditSmallMessage,
             id_=0,
-            days=1185,  # 1184 is set credit max
+            days=961,  # 960 is set credit max
             secret_key=b"\xab" * 16,
         )
 
@@ -151,6 +151,15 @@ class TestSetCreditSmallMessage(TestCase):
         )
         self.assertEqual("124 445 543 325 325", message.to_keycode())
 
+    def test_compressed_message_bits__set_960_day_message__output_correct(self):
+        message = protocol.SetCreditSmallMessage(
+            id_=1, days=960, secret_key=b"\xab" * 16
+        )
+        self.assertEqual(
+            message.compressed_message_bits[0:16].bin, "000001" + "10" + "11101111"
+        )
+        self.assertEqual("152 523 424 453 432", message.to_keycode())
+
     def test_compressed_message_bits__set_lock_message__output_correct(self):
         message = protocol.SetCreditSmallMessage(
             id_=1542, days=0, secret_key=b"\xab" * 16
@@ -168,6 +177,34 @@ class TestSetCreditSmallMessage(TestCase):
             message.compressed_message_bits[0:16].bin, "101101" + "10" + "11111111"
         )
         self.assertEqual("143 534 323 324 344", message.to_keycode())
+
+
+class TestCustomCommandSmallMessage(TestCase):
+    def test_init__invalid_command_type__raises(self):
+        with self.assertRaises(ValueError):
+            protocol.CustomCommandSmallMessage(
+                id_=63,
+                type_=220,
+                secret_key=b"\xab" * 16
+            )
+
+    def test_generate_body__bad_increment_id__raises(self):
+        # Double check that _generate_body is checking the ID value
+        # Lower bound
+        with self.assertRaises(ValueError):
+            protocol.CustomCommandSmallMessage._generate_body(type_=239)
+
+        # Upper bound
+        with self.assertRaises(ValueError):
+            protocol.CustomCommandSmallMessage._generate_body(type_=254)
+
+    def test_init__valid_command_types__expected_value_returned(self):
+        message = protocol.CustomCommandSmallMessage(
+            100,
+            protocol.CustomCommandSmallMessageType.WIPE_RESTRICTED_FLAG,
+            secret_key=b"\xab" * 16)
+
+        self.assertEqual("135 335 422 245 432", message.to_keycode())
 
 
 class TestUnlockSmallMessage(TestCase):

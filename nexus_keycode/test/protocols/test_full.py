@@ -210,14 +210,28 @@ class TestFullMessage(TestCase):
         self.assertEqual(keycode[-6:], str(msg)[-6:])
         self.assertEqual("*991 845 863 956 46#", keycode)
 
-    def test_wipe_state_reserved__raises(self):
-        self.assertRaises(
-            ValueError,
-            protocol.FullMessage.wipe_state,
-            30,
-            protocol.FullMessageWipeFlags.RESERVED,
-            self.secret_key,
+    def test_wipe_state__restricted_flag__ok(self):
+        msg = protocol.FullMessage.wipe_state(
+            30, protocol.FullMessageWipeFlags.WIPE_RESTRICTED_FLAG, self.secret_key
         )
+        keycode = msg.to_keycode()
+
+        self.assertEqual(self.secret_key, msg.secret_key)
+        self.assertTrue(
+            msg.header.startswith(str(protocol.FullMessageType.WIPE_STATE.value))
+        )
+        self.assertEqual(msg.header, "230")
+
+        self.assertTrue(msg.body.startswith("0"))
+        self.assertTrue(
+            msg.body.endswith(
+                str(protocol.FullMessageWipeFlags.WIPE_RESTRICTED_FLAG.value)
+            )
+        )
+        self.assertTrue(msg.body.endswith("003"))
+
+        self.assertEqual(keycode[-6:], str(msg)[-6:])
+        self.assertEqual("*862 585 829 300 05#", keycode)
 
 
 class TestFactoryFullMessage(TestCase):
