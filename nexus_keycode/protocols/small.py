@@ -6,12 +6,13 @@ import siphash
 
 from nexus_keycode.protocols.utils import ints_to_bytes, pseudorandom_bits
 
-NEXUS_MODULE_VERSION_STRING = "1.1.0"
+NEXUS_MODULE_VERSION_STRING = "1.2.0"
+
 
 @enum.unique
 class SmallMessageType(enum.Enum):
     ADD_CREDIT = 0
-    # _RESERVED = 1
+    PASSTHROUGH = 1
     SET_CREDIT = 2
     MAINTENANCE_TEST = 3
 
@@ -19,7 +20,7 @@ class SmallMessageType(enum.Enum):
 class SmallMessage(object):
     """Keycode messages for small keypads; immutable.
 
-    All small protocol messages follow the following structure:
+    All small protocol (except Passthrough) messages follow the following structure:
         * 32-bit message ID
         * 2-bit message type code
         * 8-bit message body
@@ -33,13 +34,25 @@ class SmallMessage(object):
     There are four types of small protocol messages, determined by the message
     type code field:
         * Credit messages - message type codes 0, 2
+        * Passthrough messages - message type code 1
         * Maintenance/Test messages - message type code 3
-        * Message type code 1 is reserved for future use
 
     Messages with type codes 0 and 2 (i.e., credit messages) may be applied
     exactly once to a given product over the lifetime of that product.  There
     is no restriction on the number of times Maintenance and Test messages may
     be applied.
+
+    Passthrough messages follow the structure below:
+        * 6-bit application data
+        * 2-bit message type code (always '0b01')
+        * 20-bit application data
+
+    Passthrough messages are obscured in the same way as other 'small' messages
+    (to make their structure less obvious when represented as digits), but
+    the content of the message is not interpreted or understood by the small
+    protocol. Instead, the firmware passes 'passthrough' messages to a handler
+    which passes the remaining 26-bits (concatenated) to other application
+    specific code for further processing.
     """
 
     UNLOCK_FLAG = object()
@@ -72,20 +85,32 @@ class SmallMessage(object):
         self.message_type = message_type
         self.body = body
 
-        # Siphash requires a 16-byte input key.
-        mac_bits = self._generate_mac_bits(secret_key[:16])
+        if self.message_type != SmallMessageType.PASSTHROUGH:
+            # Siphash requires a 16-byte input key.
+            mac_bits = self._generate_mac_bits(secret_key[:16])
 
-        # LSB 6 bits = 0x3F
-        compressed_id = self.id_ & 0x3F
+            # LSB 6 bits = 0x3F
+            compressed_id = self.id_ & 0x3F
 
-        bits = bitstring.pack(
-            ["uint:6=message_id", "uint:2=message_type", "uint:8=body"],
-            message_id=compressed_id,
-            message_type=message_type.value,
-            body=body,
-        )
-        bits.append(mac_bits)
+            bits = bitstring.pack(
+                ["uint:6=message_id", "uint:2=message_type", "uint:8=body"],
+                message_id=compressed_id,
+                message_type=message_type.value,
+                body=body,
+            )
+            bits.append(mac_bits)
+        else:
+            # 6-bits opaque data, then 2-bit type ID (passthrough), then
+            # 20-bits opaque data. No auth is performed for passthrough messages
+            assert secret_key is None
+            bits = bitstring.pack(
+                ["bits=first_six", "uint:2=message_type", "bits=last_twenty"],
+                first_six=self.body[0:6],
+                message_type=message_type.value,
+                last_twenty=self.body[6:26]
+            )
 
+        assert len(bits) == 28
         self.compressed_message_bits = bits
 
     def __str__(self):
@@ -325,8 +350,8 @@ class CustomCommandSmallMessage(SmallMessage):
     """Implemented as a SET_CREDIT message with specific increment_id values"""
     def __init__(self, id_, type_, secret_key):
         if (
-            not isinstance(type_, CustomCommandSmallMessageType) or
-            type_ not in CustomCommandSmallMessageType
+            not isinstance(type_, CustomCommandSmallMessageType)
+            or type_ not in CustomCommandSmallMessageType
         ):
             raise ValueError("unsupported value for 'type_'")
 
@@ -384,6 +409,41 @@ class MaintenanceSmallMessage(SmallMessage):
             body=body_bits,
             secret_key=secret_key,
         )
+
+
+class PassthroughSmallMessage(SmallMessage):
+    PASSTHROUGH_BITS_FIXED_LENGTH = 26
+
+    def __init__(self, bits):
+        assert isinstance(bits, bitstring.Bits)
+        if len(bits) != self.PASSTHROUGH_BITS_FIXED_LENGTH:
+            raise ValueError(
+                "Can only pass through {} bits, {} bits provided".format(
+                    self.PASSTHROUGH_BITS_FIXED_LENGTH, len(bits)
+                )
+            )
+
+        super(PassthroughSmallMessage, self).__init__(
+            id_=0,
+            message_type=SmallMessageType.PASSTHROUGH,
+            body=bits,
+            secret_key=None,
+        )
+
+    @classmethod
+    def generate_body(cls, days):
+        if isinstance(days, int):
+            if 1 <= days <= 180:
+                increment_id = days - 1
+            elif 181 <= days <= cls.MAX_ADD_CREDIT_DAYS:
+                increment_id = ((days - 181) // cls.COARSE_DAYS_PER_INCREMENT_ID) + 180
+            else:
+                raise ValueError("unsupported number of days")
+            return increment_id
+        elif days == cls.UNLOCK_FLAG:
+            return 255
+        else:
+            raise ValueError("invalid days value")
 
 
 @enum.unique
