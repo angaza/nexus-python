@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import bitstring
 import nexus_keycode.protocols.small as protocol
 
 
@@ -212,6 +213,44 @@ class TestUnlockSmallMessage(TestCase):
         message = protocol.UnlockSmallMessage(id_=1, secret_key=b"\xab" * 16)
         self.assertEqual(message.compressed_message_bits[0:16].bin, "0000010011111111")
         self.assertEqual("134 435 355 535 552", message.to_keycode())
+
+
+class TestPassthroughSmallMessage(TestCase):
+    def test_compressed_message_bits__valid_length__output_correct(self):
+        # All '1' bits
+        bits = bitstring.Bits(bin='0b11111111111111111111111111')
+        message = protocol.PassthroughSmallMessage(bits)
+        self.assertEqual(message.compressed_message_bits[0:28].bin, "1111110111111111111111111111")
+        self.assertEqual("152 544 435 555 555", message.to_keycode())
+
+        # All '0' bits
+        bits = bitstring.Bits(bin='0b00000000000000000000000000')
+        message = protocol.PassthroughSmallMessage(bits)
+        self.assertEqual(message.compressed_message_bits[0:28].bin, "0000000100000000000000000000")
+        self.assertEqual("124 325 434 222 222", message.to_keycode())
+
+        # alternating
+        bits = bitstring.Bits(bin='0b01010101010101010101010101')
+        message = protocol.PassthroughSmallMessage(bits)
+        self.assertEqual(message.compressed_message_bits[0:28].bin, "0101010101010101010101010101")
+        self.assertEqual("132 423 253 333 333", message.to_keycode())
+
+        # 10-long pattern
+        bits = bitstring.Bits(bin='0b11100110101110011010111001')
+        message = protocol.PassthroughSmallMessage(bits)
+        self.assertEqual(message.compressed_message_bits[0:28].bin, "1110010110101110011010111001")
+        self.assertEqual("123 534 332 344 543", message.to_keycode())
+
+    def test_compressed_message_bits__invalid_length__raises(self):
+        # All '1' bits (27 bits)
+        bits = bitstring.Bits(bin='0b111111111111111111111111111')
+        with self.assertRaises(ValueError):
+            protocol.PassthroughSmallMessage(bits)
+
+        # All '1' bits (25 bits)
+        bits = bitstring.Bits(bin='0b1111111111111111111111111')
+        with self.assertRaises(ValueError):
+            protocol.PassthroughSmallMessage(bits)
 
 
 class TestSmallMessage(TestCase):
