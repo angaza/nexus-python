@@ -18,3 +18,6 @@ The 'small' protocol supports a passthrough constructor, allowing arbitrary
 26-bit messages to be generated. These passthrough messages are not
 interpreted by the keycode protocol on the device firmware, but passed
 to application specific interpretations/handlers.
+
+Introduce a "SET CREDIT + WIPE RESTRICTED" functionality in small protocol,
+by carrying a new Nexus Origin Command message type.

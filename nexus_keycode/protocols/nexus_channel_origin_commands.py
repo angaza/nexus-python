@@ -2,7 +2,10 @@ import enum
 import bitstring
 import siphash
 
-from nexus_keycode.protocols.utils import ints_to_bytes
+# for 'generate_body' in `SET_CREDIT_WIPE_RESTRICTED_FLAG`
+from nexus_keycode.protocols.small import SetCreditSmallMessage, PassthroughSmallMessage
+
+NEXUS_MODULE_VERSION_STRING = "1.0.0"
 
 
 @enum.unique
@@ -10,10 +13,12 @@ class ChannelOriginAction(enum.Enum):
     """Business logic list of possible origin command actions."""
     UNLINK_ALL_ACCESSORIES = object()
     UNLOCK_ALL_ACCESSORIES = object()
-    KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG = object()
     UNLOCK_ACCESSORY = object()
     UNLINK_ACCESSORY = object()
     LINK_ACCESSORY_MODE_3 = object()
+    # Borne in Channel Origin actions, but does not interact with or modify
+    # Nexus Channel state.
+    KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG = object()
 
     def build(self, **kwargs):
         # type: () -> ChannelOriginCommandToken
@@ -80,7 +85,10 @@ class OriginCommandBearerProtocol(enum.Enum):
 class ChannelOriginCommandToken(object):
     """Data sent from the Nexus Channel origin (backend) to a controller.
 
-    This data is encoded as a string of decimal digits 0-9.
+    This data is typically encoded as a string of decimal digits 0-9.
+
+    For some limited use cases, a small protocol compatible stream of bits
+    may be used, see `KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG`.
 
     This data may be packed into a keycode (see `PASSTHROUGH_COMMAND` in
     `keycodev1.py`), or may be transmitted inside any other format.
@@ -91,7 +99,8 @@ class ChannelOriginCommandToken(object):
     checks, and do not make any assumptions about integrity checks provided by
     lower-level transport protocols.
 
-    A `ChannelOriginCommandToken` typically takes the following form:
+    A `ChannelOriginCommandToken` typically takes the following form
+    (when borne in `ASCII_DIGITS` 0-9):
 
     [1-digit command code][N-digit message body][M-digit 'auth' fields]
 
@@ -100,16 +109,16 @@ class ChannelOriginCommandToken(object):
     the `ChannelOriginCommandToken` into a controller through an existing
     keycode protocol.
 
-    :see: :class:`LinkCommand`
+    :see: :class:`LinkCommandToken`
     """
 
     def __init__(self, type_, body, auth, bearer=OriginCommandBearerProtocol.ASCII_DIGITS):
         """
         :param type_: Type of origin command this token represents
         :type type_: :class:`OriginCommandType`
-        :param body: arbitrary digits of message body
+        :param body: arbitrary contents of message body
         :type body: :class:`str`
-        :param auth: arbitrary digits of auth field
+        :param auth: Siphash_2_4 object which exposes a hash via `.hash()`
         :type auth: :class:`str`
         :param bearer: Bearing protocol/encoding for the command
         :type bearer: :class:`OriginCommandBearerProtocol`
@@ -129,6 +138,7 @@ class ChannelOriginCommandToken(object):
         return (
             "{}.{}("
             "{type_code!r}, "
+            "{bearer!r}, "
             "{body!r}, "
             "{auth!r},))").format(
             self.__class__.__module__,
@@ -140,18 +150,39 @@ class ChannelOriginCommandToken(object):
         # String of digits making up this Nexus Channel "Token".
 
         if self.bearer == OriginCommandBearerProtocol.SMALLPAD_BITS:
-            # XXX will port code over to nexus-python where we will use
-            # a new passthrough command, rather than developing on payg-client
-            raise NotImplementedError()
+            # Create 26-bit 'passthrough' message
+            # 1-bit = 0b1 (Passthrough app ID = Nexus Channel Origin Command)
+            # 3-bits = Origin Command Type ID
+            # 10-bits = Body (interpretation dependent on contents)
+            # 12-bits = MAC
+
+            bits = bitstring.pack(
+                [
+                    "uint:1=app_id",
+                    "bits:13=body",
+                    "uint:12=mac",
+                ],
+                app_id=1,
+                nx_channel_origin_command_type_code=self.type_code,
+                body=self.body,
+                # 12 MSB bits of hash
+                mac=self.auth.hash() >> 52
+            )
+
+            small_message = PassthroughSmallMessage(bits)
+            return small_message.to_keycode()
 
         else:
             # ASCII_DIGITS
             result = "{}{}{}".format(
                 self.type_code,
                 self.body,
-                self.auth
+                self.auth_digits(),
             )
         return result
+
+    def auth_digits(self):
+        return self.digits_from_siphash(self.auth)
 
     @staticmethod
     def digits_from_siphash(siphash_function, digits=6):
@@ -176,14 +207,15 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
     def __init__(
             self,
             type_,
-            controller_command,
+            # ASCII digits or bitstream, depending on the bearer
+            controller_command_and_action_data,
             auth,
             bearer,
     ):
         super(GenericControllerActionToken, self).__init__(
             type_=self._origin_command_type,
-            body=controller_command,
-            auth=self.digits_from_siphash(auth),
+            body=controller_command_and_action_data,
+            auth=auth,
             bearer=bearer,
         )
 
@@ -192,6 +224,9 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
         """ Types of 'generic controller actions' that are possible.
         Types 0-20 are reserved for Angaza use. Other types may be 'custom'
         as needed.
+
+        These type values are used in authentication on the device side
+        and are not arbitrary, renumbering will result in a breaking change.
         """
 
         # Delete all accessories from the receiving controller
@@ -220,20 +255,24 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
         """
         # Requires 16-bit symmetric Nexus keys
         assert len(controller_sym_key) == 16
-
         controller_command_value = type_.value
+
+        if type_action_data is None:
+            type_action_data_int = 0
+        else:
+            type_action_data_int = type_action_data
 
         packed_target_inputs = bitstring.pack(
             [
                 "uintle:32=controller_command_count",
-                "uintle:8=origin_command_type_code",  # '0'
-                "uintle:16=controller_command_value",
+                "uintle:8=origin_command_type_code",  # '0 = Generic Controller Action'
+                "uintle:16=controller_command_value",  # generic action 'type'
                 "uintle:16=type_action_data",  # if unused, '0'
             ],
             controller_command_count=controller_command_count,
             origin_command_type_code=cls._origin_command_type.value,
             controller_command_value=controller_command_value,
-            type_action_data=type_action_data,
+            type_action_data=type_action_data_int,
         ).bytes
         assert len(packed_target_inputs) == 9
 
@@ -241,12 +280,39 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
             controller_sym_key,
             packed_target_inputs)
 
-        return cls(
-            type_=type_,
-            controller_command="{:02d}".format(controller_command_value),
-            auth=auth,
-            bearer=bearer
-        )
+        if bearer == OriginCommandBearerProtocol.SMALLPAD_BITS:
+            if type_ != cls.GenericControllerActionType.KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG:
+                raise NotImplementedError("Type {} not implemented".format(type_))
+
+            body_bits = bitstring.pack(
+                [
+                    "uint:3=controller_command_data",
+                    "bits:2=generic_action_type_id",
+                    "uintle:8=set_credit_increment_id",
+                ],
+                # '0', generic controller action
+                controller_command_data=cls._origin_command_type.value,
+                # '11' indicates set credit + wipe restricted
+                generic_action_type_id=bitstring.Bits('0b11'),
+                set_credit_increment_id=type_action_data
+            )
+
+            return cls(
+                type_=type_,
+                controller_command_and_action_data=body_bits,
+                auth=auth,
+                bearer=bearer
+            )
+
+        else:
+            # 'type_action_data' is currently unused for ASCII bearer
+            assert type_action_data is None
+            return cls(
+                type_=type_,
+                controller_command_and_action_data="{:02d}".format(controller_command_value),
+                auth=auth,
+                bearer=bearer
+            )
 
     @classmethod
     def unlink_all_accessories(
@@ -256,7 +322,7 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
     ):
         return cls._generic_controller_action_builder(
             cls.GenericControllerActionType.UNLINK_ALL_ACCESSORIES,
-            0,
+            None,
             controller_command_count,
             controller_sym_key,
         )
@@ -269,7 +335,7 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
     ):
         return cls._generic_controller_action_builder(
             cls.GenericControllerActionType.UNLOCK_ALL_ACCESSORIES,
-            0,
+            None,
             controller_command_count,
             controller_sym_key,
         )
@@ -277,10 +343,13 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
     @classmethod
     def keycode_set_credit_wipe_restricted_flag(
         cls,
-        set_credit_increment_id,
+        days,
         controller_command_count,
         controller_sym_key,
     ):
+        if days == u"UNLOCK":
+            days = SetCreditSmallMessage.UNLOCK_FLAG
+        set_credit_increment_id = SetCreditSmallMessage.generate_body(days)
         return cls._generic_controller_action_builder(
             cls.GenericControllerActionType.KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG,
             set_credit_increment_id,
@@ -303,7 +372,7 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
         super(SpecificLinkedAccessoryToken, self).__init__(
             type_=type_,
             body=truncated_accessory_asp_id,
-            auth=self.digits_from_siphash(auth)
+            auth=auth,
         )
 
     @classmethod
@@ -484,5 +553,5 @@ class LinkCommandToken(ChannelOriginCommandToken):
         return cls(
             type_=command_type,
             body=body_digits,
-            auth=cls.digits_from_siphash(auth)
+            auth=auth,
         )

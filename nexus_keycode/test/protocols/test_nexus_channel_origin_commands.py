@@ -1,4 +1,5 @@
 from unittest import TestCase
+import siphash
 import nexus_keycode.protocols.nexus_channel_origin_commands as protocol
 
 
@@ -23,7 +24,8 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(digits, '000018783')
         self.assertEqual(token.type_code, 0)
         self.assertEqual(token.body, '00')
-        self.assertEqual(token.auth, '018783')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+        self.assertEqual(token.auth_digits(), '018783')
 
     def test_unlock_all_accessories_builder__ok(self):
         token = (
@@ -36,25 +38,30 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(digits, '001906394')
         self.assertEqual(token.type_code, 0)
         self.assertEqual(token.body, '01')
-        self.assertEqual(token.auth, '906394')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+        self.assertEqual(token.auth_digits(), '906394')
 
     def test_keycode_set_credit_wipe_restricted_flag__various_days_to_set__ok(self):
-        token = (
-            protocol.ChannelOriginAction.KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG.build(
-                set_credit_increment_id=0,
+        # (days, 13-binary body bits, transmitted digits)
+        scenarios = [
+            (0, '0001111111110', '155 323 233 233 234'),
+            (1, '0001100000000', '134 225 452 425 524'),
+            (7, '0001100000110', '125 555 223 532 223'),
+            (30, '0001100011101', '123 522 355 435 224'),
+            (90, '0001101011001', '154 225 533 455 552'),
+            (960, '0001111101111', '153 253 222 242 252'),
+            (u"UNLOCK", '0001111111111', '135 223 322 522 343'),
+        ]
+
+        for scenario in scenarios:
+            token = protocol.ChannelOriginAction.KEYCODE_SET_CREDIT_WIPE_RESTRICTED_FLAG.build(
+                days=scenario[0],
                 controller_command_count=self.controller_command_count,
                 controller_sym_key=self.controller_asp_key
             )
-        )
-        # Requires smallpad passthrough implementation as well as exposing
-        # common MAC/auth logic, so that we can:
-        # 1) Compute the MAC bits
-        # 2) Pass the raw bits + MAC to the smallpad passthrough message ctor
-        # 3) Return the 'passthrough' command message
-        self.assertRaises(
-            NotImplementedError,
-            token.to_digits,
-        )
+            self.assertEqual(token.body.bin, scenario[1])
+            digits = token.to_digits()
+            self.assertEqual(digits, scenario[2])
 
     def test_unlink_specific_accessory_builder__ok(self):
         token = (
@@ -68,7 +75,8 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(digits, '20536545')
         self.assertEqual(token.type_code, 2)
         self.assertEqual(token.body, '0')
-        self.assertEqual(token.auth, '536545')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+        self.assertEqual(token.auth_digits(), '536545')
 
     def test_unlock_specific_accessory_builder__ok(self):
         token = (
@@ -82,7 +90,8 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(digits, '10244210')
         self.assertEqual(token.type_code, 1)
         self.assertEqual(token.body, '0')
-        self.assertEqual(token.auth, '244210')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+        self.assertEqual(token.auth_digits(), '244210')
 
     def test_link_challenge_mode_3_builder__ok(self):
         token = (
@@ -99,18 +108,21 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(token.type_code, 9)
         # body = truncated ASP ID + auth for accessory
         self.assertEqual(token.body, '0445034')
-        self.assertEqual(token.auth, '581275')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+        self.assertEqual(token.auth_digits(), '581275')
 
 
 class TestChannelOriginCommandToken(TestCase):
     atoken = protocol.ChannelOriginCommandToken(
         type_=protocol.OriginCommandType.UNLINK_ACCESSORY,  # 2
         body='12',
-        auth='554433'
+        auth=siphash.SipHash_2_4(
+            b'\xff' * 16, b'\x00' * 16
+        )
     )
 
     def test_str__simple_token__expected_value_returned(self):
-        self.assertEqual(str(self.atoken), "212554433")
+        self.assertEqual(str(self.atoken), "212616399")
 
     def test_repr__simple_token__expected_snippets_present(self):
         repred = repr(self.atoken)
@@ -118,10 +130,11 @@ class TestChannelOriginCommandToken(TestCase):
         self.assertIn("ChannelOriginCommandToken", repred)
         self.assertIn(repr(self.atoken.type_code), repred)
         self.assertIn(repr(self.atoken.body), repred)
+        self.assertIn(repr(self.atoken.bearer), repred)
         self.assertIn(repr(self.atoken.auth), repred)
 
     def test_to_digits__output_correct(self):
-        self.assertEqual('212554433', self.atoken.to_digits())
+        self.assertEqual('212616399', self.atoken.to_digits())
 
     def test_init__invalid_type__raises(self):
         self.assertRaises(
@@ -152,9 +165,10 @@ class TestGenericControllerActionToken(TestCase):
 
         # Command ID
         self.assertEqual(token.body, '00')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
 
         # Origin authentication for this command
-        self.assertEqual(token.auth, '018783')
+        self.assertEqual(token.auth_digits(), '018783')
 
     def test_unlock_all_accessories__ok(self):
         token = (
@@ -171,9 +185,10 @@ class TestGenericControllerActionToken(TestCase):
 
         # Command ID
         self.assertEqual(token.body, '01')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
 
         # Origin authentication for this command
-        self.assertEqual(token.auth, '906394')
+        self.assertEqual(token.auth_digits(), '906394')
 
 
 class TestSpecificLinkedAccessoryToken(TestCase):
@@ -197,9 +212,10 @@ class TestSpecificLinkedAccessoryToken(TestCase):
 
         # Truncated accessory ASP ID
         self.assertEqual(token.body, '3')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
 
         # Origin authentication for this command
-        self.assertEqual(token.auth, '228427')
+        self.assertEqual(token.auth_digits(), '228427')
 
     def test_unlock_specific_accessory_ok(self):
         token = (
@@ -217,9 +233,10 @@ class TestSpecificLinkedAccessoryToken(TestCase):
 
         # Truncated accessory ASP ID
         self.assertEqual(token.body, '3')
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
 
         # Origin authentication for this command
-        self.assertEqual(token.auth, '046876')
+        self.assertEqual(token.auth_digits(), '046876')
 
 
 class TestLinkCommandToken(TestCase):
@@ -246,7 +263,9 @@ class TestLinkCommandToken(TestCase):
         # Truncated accessory ASP ID + challenge result
         self.assertEqual(token.body, '0382847')
 
+        self.assertEqual(token.bearer, protocol.OriginCommandBearerProtocol.ASCII_DIGITS)
+
         # Origin ASP module rejects token if this check doesn't match
         # Required for Angaza keycode implementation, since 'passthrough'
         # messages don't perform authentication/validation on contents.
-        self.assertEqual(token.auth, '429307')
+        self.assertEqual(token.auth_digits(), '429307')
