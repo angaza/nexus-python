@@ -312,11 +312,12 @@ class SetCreditSmallMessage(SmallMessage):
         super(SetCreditSmallMessage, self).__init__(
             id_=id_,
             message_type=SmallMessageType.SET_CREDIT,
-            body=self._generate_body(days),
+            body=self.generate_body(days),
             secret_key=secret_key,
         )
 
-    def _generate_body(self, days):
+    @classmethod
+    def generate_body(cls, days):
         if isinstance(days, int):
             if 1 <= days <= 90:
                 increment_id = days - 1
@@ -333,7 +334,7 @@ class SetCreditSmallMessage(SmallMessage):
             else:
                 raise ValueError("unsupported number of days")
             return increment_id
-        elif days == self.UNLOCK_FLAG:
+        elif days == cls.UNLOCK_FLAG:
             return 255
         else:
             raise ValueError("invalid days value")
@@ -429,21 +430,6 @@ class PassthroughSmallMessage(SmallMessage):
             body=bits,
             secret_key=None,
         )
-
-    @classmethod
-    def generate_body(cls, days):
-        if isinstance(days, int):
-            if 1 <= days <= 180:
-                increment_id = days - 1
-            elif 181 <= days <= cls.MAX_ADD_CREDIT_DAYS:
-                increment_id = ((days - 181) // cls.COARSE_DAYS_PER_INCREMENT_ID) + 180
-            else:
-                raise ValueError("unsupported number of days")
-            return increment_id
-        elif days == cls.UNLOCK_FLAG:
-            return 255
-        else:
-            raise ValueError("invalid days value")
 
 
 @enum.unique
