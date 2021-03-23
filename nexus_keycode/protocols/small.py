@@ -433,6 +433,172 @@ class PassthroughSmallMessage(SmallMessage):
 
 
 @enum.unique
+class ExtendedSmallMessageType(enum.Enum):
+    """ 8 possible extended small message types (0-7)
+
+    (type ID integer, number of body bits dedicated to truncated message ID)
+    """
+    # Set credit and also clear custom 'restricted flag'
+    SET_CREDIT_WIPE_RESTRICTED_FLAG = (0, 2)
+
+
+class ExtendedSmallMessage(PassthroughSmallMessage):
+    """'Extended' small keycodes carried inside a Passthrough message.
+
+    These are 26-bit messages structured as:
+
+    `atttbbbbbbbbbbmmmmmmmmmmmm`
+
+    * `a` = Passthrough "App ID" (1 bit, 1 = "Extended Small" message)
+    * `t` = ExtendedSmallMessageType (3 bits)
+    * `b` = Message Body (10 bits, contents dependent on type)
+    * `m` = Message Authentication Code (12 bits)
+
+    Message ID *may* be higher than what is requested, to avoid collisions
+    within the receiving window on the device. The message ID generated is
+    obtained via `message.id_`.
+    """
+    PASSTHROUGH_APPLICATION_ID_EXTENDED_SMALL_BIT_VALUE = 1
+
+    def __init__(self, type_, **kwargs):
+        bits = bitstring.pack(
+            ["uint:1=app_id"],
+            app_id=self.PASSTHROUGH_APPLICATION_ID_EXTENDED_SMALL_BIT_VALUE
+        )
+
+        if type_ not in [e for e in ExtendedSmallMessageType]:
+            raise ValueError("unsupported value for 'type_'")
+
+        bits.append(bitstring.pack(["uint:3=type_code"], type_code=type_.value[0]))
+        assert len(bits) == 4
+
+        if type_ == ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG:
+            required_args = ['id_', 'days', 'secret_key']
+            if not all(arg in kwargs for arg in required_args):
+                raise ValueError("Missing required kwargs {}".format(required_args))
+
+            id_ = kwargs['id_']
+            days = kwargs['days']
+            secret_key = kwargs['secret_key']
+
+            body_bits = self.generate_set_credit_wipe_restricted_flag_body(
+                id_,
+                days
+            )
+            assert len(body_bits) == 10
+
+            final_id, auth = self.generate_auth_bits(
+                id_,
+                type_,
+                body_bits,
+                secret_key
+            )
+
+            if final_id != id_:
+                # Unable to use original message ID, update to a new one.
+                body_bits = self.generate_set_credit_wipe_restricted_flag_body(
+                    final_id,
+                    days
+                )
+
+            body_and_mac = bitstring.pack(
+                ["bits:10=body", "uint:12=auth"],
+                body=body_bits,
+                auth=auth
+            )
+
+            self.extended_message_id = final_id
+
+        else:
+            raise ValueError("unsupported value for 'type_'")
+
+        # 22 bits for body and MAC fields
+        assert len(body_and_mac) == 22
+
+        bits.append(body_and_mac)
+        return super(ExtendedSmallMessage, self).__init__(bits=bits)
+
+    @classmethod
+    def generate_auth_bits(cls, full_id, type_, body, secret_key):
+        # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> (int, int)
+
+        # how far to 'look ahead' for potentially colliding MACs for same
+        # keycode contents with different message ID in the same firmware
+        # receipt window. If one is encountered, will select a different (higher)
+        # ID than the one initially attempted.
+        MESSAGE_ID_LOOKAHEAD_WINDOW = 40
+        # The message contains a truncated ID (2 bits) dividing the window by 4
+        SUBWINDOW_STEP_INTERVAL = 4
+
+        def _pack_and_generate_auth(full_id, type_, body, secret_key):
+            # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> int
+
+            packed_mac_inputs = bitstring.pack(
+                [
+                    "uintle:32=full_id",
+                    "uintle:8=extended_type_code",
+                    "uintle:16=body_for_auth",  # only 10 bits are used
+                ],
+                full_id=full_id,
+                extended_type_code=type_.value[0],
+                body_for_auth=body.uint
+            )
+            mac_input_bytes = packed_mac_inputs.tobytes()
+            assert len(mac_input_bytes) == 7
+            # 12 MSB bits are MAC/auth
+            return siphash.SipHash_2_4(secret_key, mac_input_bytes).hash() >> 52
+
+        # {auth: msg_id}
+        possible_ids_and_auth = dict()
+        collided_macs = set()
+
+        # Iterate through all IDs in the window, and find the lowest one
+        # that has no MAC collisions in the window - use that ID.
+        for i in range(full_id, full_id + MESSAGE_ID_LOOKAHEAD_WINDOW + 1):
+            auth = _pack_and_generate_auth(full_id + i, type_, body, secret_key)
+            if auth in possible_ids_and_auth.keys():
+                # If the difference between the numbers is evenly divisible by
+                # the subwindow interval, the IDs have the same 'LSB 2' bits
+                if (possible_ids_and_auth[auth] - i) % SUBWINDOW_STEP_INTERVAL:
+                    possible_ids_and_auth.pop(auth)
+                    collided_macs.add(auth)
+
+            elif auth not in collided_macs:
+                possible_ids_and_auth[auth] = i
+
+        lowest_auth, lowest_id = min(possible_ids_and_auth.items(), key=lambda x: x[1])
+        if lowest_id != full_id:
+            print(
+                "Lowest ID with no chance of MAC collision is {} "
+                "(window {}-{}). Using ID {} instead of {}.".format(
+                    lowest_id,
+                    full_id,
+                    full_id + MESSAGE_ID_LOOKAHEAD_WINDOW,
+                    lowest_id,
+                    full_id)
+            )
+
+        if lowest_id == full_id + MESSAGE_ID_LOOKAHEAD_WINDOW:
+            raise ValueError("Unable to find a MAC with no collision in the window.")
+
+        return (lowest_id, lowest_auth)
+
+    @classmethod
+    def generate_set_credit_wipe_restricted_flag_body(cls, id_, days):
+        # type: (int, int) -> bitstring.Bits
+        set_credit_increment_id = SetCreditSmallMessage.generate_body(days)
+
+        body_bits = bitstring.pack(
+            ["uint:2=truncated_msg_id", "uintle:8=increment_id"],
+            # truncate to least-significant 4 bits of the full ID
+            truncated_msg_id=id_ & 0b11,
+            increment_id=set_credit_increment_id
+        )
+
+        return body_bits
+
+
+@enum.unique
 class TestSmallMessageType(enum.Enum):
     SHORT_TEST = 0
     OQC_TEST = 1

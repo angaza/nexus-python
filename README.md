@@ -103,13 +103,6 @@ AddCreditSmallMessage(id_=42, days=7, secret_key=secret_key).to_keycode()
 # outputs 135 242 422 455 244
 ```
 
-Update Credit
-
-```python
-UpdateCreditSmallMessage(id_=43, days=14, secret_key=secret_key).to_keycode()
-# outputs 145 222 453 233 453
-```
-
 Set Credit
 
 ```python
@@ -124,8 +117,27 @@ UnlockSmallMessage(id_=45, secret_key=secret_key).to_keycode()
 # outputs 152 323 254 454 322
 ```
 
-Wipe
+Wipe Message IDs
+
 ```python
 MaintenanceSmallMessage(type_=MaintenanceSmallMessageType.WIPE_IDS_ALL, secret_key=secret_key).to_keycode()
 # outputs 122 324 235 545 545
+```
+
+Wipe Custom "Restricted Flag"
+
+```python
+CustomCommandSmallMessage(id_=46, type_=CustomCommandSmallMessageType.WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# outputs 154 545 254 542 523
+```
+
+Set Credit + Wipe Custom "Restricted Flag"
+
+```python
+code = ExtendedSmallMessage(id_=47, days=30, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key)
+# Check if message ID was automatically incremented (extended messages may increment ID to avoid collisions)
+code.extended_message_id
+# outputs 47
+code.to_keycode9)
+# outputs 135 424 433 523 434
 ```
