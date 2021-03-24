@@ -259,82 +259,138 @@ class TestExtendedSmallMessage(TestCase):
             protocol.ExtendedSmallMessage(
                 220,
                 id_=102,
+                days=30,
                 secret_key=b"\xab" * 16
             )
 
     def test_init__valid_message_types__expected_value_returned(self):
+        secret_key = b"\xab" * 16
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
             id_=102,
             days=30,
-            secret_key=b"\xab" * 16)
+            secret_key=secret_key)
 
         body_bits = message.body
         # first bit = app ID
         self.assertEqual(1, body_bits[0:1].uint)
         # type code
-        self.assertEqual(protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0], body_bits[1:4].uint)
+        self.assertEqual(
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0],
+            body_bits[1:4].uint
+        )
         # LSB 2 bits of message ID (0b10 for 102)
         self.assertEqual(2, body_bits[4:6].uint)
         # increment ID for days = 30
         self.assertEqual(29, body_bits[6:14].uint)
+
+        computed_auth = protocol.ExtendedSmallMessage._compute_auth(
+            102,
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+            body_bits[4:14],  # body of inner 'extended' message
+            secret_key)
+
+        self.assertEqual(computed_auth, body_bits[14:26].uint)
+
         # fixed MAC (matches 223 345 below)
-        self.assertEqual(0b000001011011, body_bits[14:26].uint)
-        self.assertEqual("153 453 533 223 345", message.to_keycode())
+        self.assertEqual(0b111100001010, body_bits[14:26].uint)
+        self.assertEqual("132 223 222 552 244", message.to_keycode())
 
     def test_generate_set_credit_wipe_restricted__mac_collision__final_message_id_updated(self):
         # expect collision, ID updated to '6'
+        secret_key = b"\xab" * 16
+
+        # Expect collision at message ID 58
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
-            id_=5,
-            days=30,
-            secret_key=b"\xab" * 16)
+            id_=26,
+            days=51,
+            secret_key=secret_key)
 
-        self.assertEqual(6, message.extended_message_id)
+        self.assertEqual(27, message.extended_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
-        self.assertEqual(protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0], body_bits[1:4].uint)
-        # LSB 2 bits of message ID (0b10 for 6)
-        self.assertEqual(2, body_bits[4:6].uint)
-        # increment ID for days = 30
-        self.assertEqual(29, body_bits[6:14].uint)
-        self.assertEqual("124 423 523 222 432", message.to_keycode())
+        self.assertEqual(
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0],
+            body_bits[1:4].uint
+        )
+        # LSB 2 bits of message ID (3 for 27)
+        self.assertEqual(3, body_bits[4:6].uint)
+        # increment ID for days = 51
+        self.assertEqual(50, body_bits[6:14].uint)
 
-        # Expect collision, ID updated to '159'
+        # manually verify auth field
+        computed_auth = protocol.ExtendedSmallMessage._compute_auth(
+            27,
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+            body_bits[4:14],  # body of inner 'extended' message
+            secret_key)
+
+        self.assertEqual(computed_auth, body_bits[14:26].uint)
+
+        self.assertEqual("153 422 352 252 245", message.to_keycode())
+
+        # Expect collision at ID 861
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
-            id_=158,
+            id_=833,
             days=0,
             secret_key=b"\xab" * 16)
 
-        self.assertEqual(159, message.extended_message_id)
+        self.assertEqual(834, message.extended_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
-        self.assertEqual(protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0], body_bits[1:4].uint)
-        # LSB 2 bits of message ID (0b11 for 159)
-        self.assertEqual(3, body_bits[4:6].uint)
+        self.assertEqual(
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0],
+            body_bits[1:4].uint
+        )
+        # LSB 2 bits of message ID (0b10 for 834)
+        self.assertEqual(2, body_bits[4:6].uint)
         # increment ID for days = 0
         self.assertEqual(254, body_bits[6:14].uint)
-        self.assertEqual("142 335 532 323 543", message.to_keycode())
+
+        computed_auth = protocol.ExtendedSmallMessage._compute_auth(
+            834,
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+            body_bits[4:14],  # body of inner 'extended' message
+            secret_key)
+
+        self.assertEqual(computed_auth, body_bits[14:26].uint)
+
+        self.assertEqual("134 225 533 544 333", message.to_keycode())
 
     def test_generate_set_credit_wipe_restricted__unlock_increment__expected_body(self):
+        secret_key = b"\xab" * 16
+
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
             id_=9,
             days=protocol.SmallMessage.UNLOCK_FLAG,
-            secret_key=b"\xab" * 16)
+            secret_key=secret_key)
 
         self.assertEqual(9, message.extended_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
-        self.assertEqual(protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0], body_bits[1:4].uint)
+        self.assertEqual(
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0],
+            body_bits[1:4].uint
+        )
         self.assertEqual(1, body_bits[4:6].uint)
         # increment ID for days = UNLOCK
         self.assertEqual(255, body_bits[6:14].uint)
-        self.assertEqual("134 334 533 234 355", message.to_keycode())
+
+        computed_auth = protocol.ExtendedSmallMessage._compute_auth(
+            9,
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+            body_bits[4:14],  # body of inner 'extended' message
+            secret_key)
+
+        self.assertEqual(computed_auth, body_bits[14:26].uint)
+
+        self.assertEqual("153 435 425 322 453", message.to_keycode())
 
     def test_generate_set_credit_wipe_restricted__0_credit_increment__expected_body(self):
         message = protocol.ExtendedSmallMessage(
@@ -347,11 +403,15 @@ class TestExtendedSmallMessage(TestCase):
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
-        self.assertEqual(protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0], body_bits[1:4].uint)
+        self.assertEqual(
+            protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG.value[0],
+            body_bits[1:4].uint
+        )
         self.assertEqual(0, body_bits[4:6].uint)
         # increment ID for days = 0
         self.assertEqual(254, body_bits[6:14].uint)
-        self.assertEqual("142 455 344 533 533", message.to_keycode())
+
+        self.assertEqual("144 435 244 232 344", message.to_keycode())
 
     def test_generate_set_credit_wipe_restricted__bad_increment_id__raises(self):
         # Double check that _generate_body is checking the ID value

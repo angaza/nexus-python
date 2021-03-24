@@ -1,3 +1,5 @@
+import logging
+
 import enum
 import math
 
@@ -7,6 +9,8 @@ import siphash
 from nexus_keycode.protocols.utils import ints_to_bytes, pseudorandom_bits
 
 NEXUS_MODULE_VERSION_STRING = "1.2.0"
+
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
@@ -459,6 +463,8 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
     obtained via `message.id_`.
     """
     PASSTHROUGH_APPLICATION_ID_EXTENDED_SMALL_BIT_VALUE = 1
+    EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE = 40
+    EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_BELOW = 23
 
     def __init__(self, type_, **kwargs):
         bits = bitstring.pack(
@@ -481,25 +487,30 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
             days = kwargs['days']
             secret_key = kwargs['secret_key']
 
-            body_bits = self.generate_set_credit_wipe_restricted_flag_body(
-                id_,
-                days
-            )
-            assert len(body_bits) == 10
-
-            final_id, auth = self.generate_auth_bits(
-                id_,
-                type_,
-                body_bits,
-                secret_key
-            )
-
-            if final_id != id_:
-                # Unable to use original message ID, update to a new one.
+            # We might not be able to use the requested `id_` due to
+            # MAC collisions, and may need to increment.
+            # However, we don't want to increment beyond
+            auth = None
+            final_id = id_
+            while (
+                auth is None and final_id < (
+                    id_ + self.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE
+                )
+            ):
                 body_bits = self.generate_set_credit_wipe_restricted_flag_body(
                     final_id,
                     days
                 )
+                assert len(body_bits) == 10
+                auth = self.compute_auth_with_no_collisions(
+                    final_id,
+                    type_,
+                    body_bits,
+                    secret_key
+                )
+                if auth is None:
+                    logger.info("Unable to use id %s due to collision.", final_id)
+                    final_id += 1
 
             body_and_mac = bitstring.pack(
                 ["bits:10=body", "uint:12=auth"],
@@ -518,70 +529,62 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
         bits.append(body_and_mac)
         return super(ExtendedSmallMessage, self).__init__(bits=bits)
 
+    @staticmethod
+    def _compute_auth(full_id, type_, body, secret_key):
+        # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> int
+
+        packed_mac_inputs = bitstring.pack(
+            [
+                "uintle:32=full_id",
+                "uintle:8=extended_type_code",
+                "uintle:16=body_for_auth",  # 10 bits, left is 0-padded
+            ],
+            full_id=full_id,
+            extended_type_code=type_.value[0],
+            body_for_auth=body.uint
+        )
+        mac_input_bytes = packed_mac_inputs.tobytes()
+        assert len(mac_input_bytes) == 7
+        # 12 MSB bits are MAC/auth
+        return siphash.SipHash_2_4(secret_key, mac_input_bytes).hash() >> 52
+
     @classmethod
-    def generate_auth_bits(cls, full_id, type_, body, secret_key):
-        # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> (int, int)
+    def compute_auth_with_no_collisions(cls, requested_id, type_, body, secret_key):
+        # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> Optional[int]
+        # Will return None if there is a possible collision for the requested
+        # ID, otherwise will return the auth value for the requested ID.
 
-        # how far to 'look ahead' for potentially colliding MACs for same
-        # keycode contents with different message ID in the same firmware
-        # receipt window. If one is encountered, will select a different (higher)
-        # ID than the one initially attempted.
-        MESSAGE_ID_LOOKAHEAD_WINDOW = 40
         # The message contains a truncated ID (2 bits) dividing the window by 4
-        SUBWINDOW_STEP_INTERVAL = 4
+        SUBWINDOW_STEP_INTERVAL = 2 ** type_.value[1]
 
-        def _pack_and_generate_auth(full_id, type_, body, secret_key):
-            # type: (int, ExtendedSmallMessageType, bitstring.Bits, bytes) -> int
-
-            packed_mac_inputs = bitstring.pack(
-                [
-                    "uintle:32=full_id",
-                    "uintle:8=extended_type_code",
-                    "uintle:16=body_for_auth",  # only 10 bits are used
-                ],
-                full_id=full_id,
-                extended_type_code=type_.value[0],
-                body_for_auth=body.uint
-            )
-            mac_input_bytes = packed_mac_inputs.tobytes()
-            assert len(mac_input_bytes) == 7
-            # 12 MSB bits are MAC/auth
-            return siphash.SipHash_2_4(secret_key, mac_input_bytes).hash() >> 52
+        candidate_mac = cls._compute_auth(requested_id, type_, body, secret_key)
 
         # {auth: msg_id}
-        possible_ids_and_auth = dict()
-        collided_macs = set()
+        min_window_id = max(
+            requested_id - cls.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_BELOW,
+            0
+        )
+        max_window_id = (
+            requested_id + cls.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE
+        )
 
-        # Iterate through all IDs in the window, and find the lowest one
-        # that has no MAC collisions in the window - use that ID.
-        for i in range(full_id, full_id + MESSAGE_ID_LOOKAHEAD_WINDOW + 1):
-            auth = _pack_and_generate_auth(full_id + i, type_, body, secret_key)
-            if auth in possible_ids_and_auth.keys():
-                # If the difference between the numbers is evenly divisible by
-                # the subwindow interval, the IDs have the same 'LSB 2' bits
-                if (possible_ids_and_auth[auth] - i) % SUBWINDOW_STEP_INTERVAL:
-                    possible_ids_and_auth.pop(auth)
-                    collided_macs.add(auth)
+        for i in range(min_window_id, max_window_id + 1):
+            # Only check for collisions on IDs that have the same
+            # 4-LSB transmitted message ID bits
+            if (requested_id - i) % SUBWINDOW_STEP_INTERVAL != 0:
+                continue
 
-            elif auth not in collided_macs:
-                possible_ids_and_auth[auth] = i
+            # Don't recompute the candidate MAC
+            elif requested_id == i:
+                continue
 
-        lowest_auth, lowest_id = min(possible_ids_and_auth.items(), key=lambda x: x[1])
-        if lowest_id != full_id:
-            print(
-                "Lowest ID with no chance of MAC collision is {} "
-                "(window {}-{}). Using ID {} instead of {}.".format(
-                    lowest_id,
-                    full_id,
-                    full_id + MESSAGE_ID_LOOKAHEAD_WINDOW,
-                    lowest_id,
-                    full_id)
-            )
+            auth = cls._compute_auth(i, type_, body, secret_key)
 
-        if lowest_id == full_id + MESSAGE_ID_LOOKAHEAD_WINDOW:
-            raise ValueError("Unable to find a MAC with no collision in the window.")
+            if auth == candidate_mac:
+                logger.info("Encountered collision at ID %s (Auth=%s)", i, auth)
+                return None
 
-        return (lowest_id, lowest_auth)
+        return candidate_mac
 
     @classmethod
     def generate_set_credit_wipe_restricted_flag_body(cls, id_, days):
