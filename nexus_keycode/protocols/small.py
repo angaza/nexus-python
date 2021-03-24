@@ -5,6 +5,7 @@ import math
 
 import bitstring
 import siphash
+from typing import Optional
 
 from nexus_keycode.protocols.utils import ints_to_bytes, pseudorandom_bits
 

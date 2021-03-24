@@ -15,7 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/angaza/nexus-python",
     download_url="https://github.com/angaza/nexus-python/releases/download/2.2.0/nexus_keycode-2.2.0.tar.gz",
-    install_requires=["bitstring>=3.0.2", "enum34==1.1.6", "siphash==0.0.1"],
+    install_requires=["bitstring>=3.0.2", "enum34==1.1.6", "siphash==0.0.1", "typing>=3.7.4"],
     test_suite="nose2.collector",
     include_package_data=True,
     classifiers=[
