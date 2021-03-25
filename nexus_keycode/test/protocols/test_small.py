@@ -292,15 +292,14 @@ class TestExtendedSmallMessage(TestCase):
 
         self.assertEqual(computed_auth, body_bits[14:26].uint)
 
-        # fixed MAC (matches 223 345 below)
+        # fixed MAC (matches 552 244 below)
         self.assertEqual(0b111100001010, body_bits[14:26].uint)
         self.assertEqual("132 223 222 552 244", message.to_keycode())
 
     def test_generate_set_credit_wipe_restricted__mac_collision__final_message_id_updated(self):
-        # expect collision, ID updated to '6'
         secret_key = b"\xab" * 16
 
-        # Expect collision at message ID 58
+        # Expect collision at message ID 26, updated to 27
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
             id_=26,
