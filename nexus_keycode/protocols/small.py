@@ -513,6 +513,11 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
                     logger.info("Unable to use id %s due to collision.", final_id)
                     final_id += 1
 
+            assert (
+                final_id <
+                id_ + self.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE
+            )
+
             body_and_mac = bitstring.pack(
                 ["bits:10=body", "uint:12=auth"],
                 body=body_bits,
@@ -565,8 +570,10 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
             requested_id - cls.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_BELOW,
             0
         )
-        max_window_id = (
-            requested_id + cls.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE
+        max_window_id = min(
+            requested_id + cls.EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE,
+            # Sanity check that generation is not attempted above UINT16_MAX
+            65535,
         )
 
         for i in range(min_window_id, max_window_id + 1):
