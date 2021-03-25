@@ -467,6 +467,9 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
     EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_ABOVE = 40
     EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_BELOW = 23
 
+    def __repr__(self):
+        return "{}({extended_message_id!r}, {body!r})".format(self.__class__.__name__, **self.__dict__)
+
     def __init__(self, type_, **kwargs):
         bits = bitstring.pack(
             ["uint:1=app_id"],
