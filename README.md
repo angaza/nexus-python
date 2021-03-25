@@ -139,5 +139,5 @@ code = ExtendedSmallMessage(id_=47, days=30, type_=ExtendedSmallMessageType.SET_
 code.extended_message_id
 # outputs 47
 code.to_keycode()
-# outputs 135 424 433 523 434
+# outputs 135 242 352 334 254
 ```
