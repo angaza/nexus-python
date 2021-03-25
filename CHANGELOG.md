@@ -22,8 +22,8 @@ The 'small' protocol supports a passthrough constructor, allowing arbitrary
 interpreted by the keycode protocol on the device firmware, but passed
 to application specific interpretations/handlers.
 
-Build an 'small extended' keycode protocol fthat encapsulates its messages
-in the 'small 'passthrough' message type.
+Build an 'small extended' keycode protocol that encapsulates its messages
+in the 'small passthrough' message type.
 
 Introduce a "SET CREDIT + WIPE RESTRICTED FLAG" function in this 'small
 extended' protocol.

@@ -490,7 +490,7 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
 
             # We might not be able to use the requested `id_` due to
             # MAC collisions, and may need to increment.
-            # However, we don't want to increment beyond
+            # However, we don't want to increment beyond the message ID window
             auth = None
             final_id = id_
             while (
@@ -571,7 +571,7 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
 
         for i in range(min_window_id, max_window_id + 1):
             # Only check for collisions on IDs that have the same
-            # 4-LSB transmitted message ID bits
+            # 2-LSB transmitted message ID bits
             if (requested_id - i) % SUBWINDOW_STEP_INTERVAL != 0:
                 continue
 
@@ -594,7 +594,7 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
 
         body_bits = bitstring.pack(
             ["uint:2=truncated_msg_id", "uintle:8=increment_id"],
-            # truncate to least-significant 4 bits of the full ID
+            # truncate to least-significant 2 bits of the full ID
             truncated_msg_id=id_ & 0b11,
             increment_id=set_credit_increment_id
         )

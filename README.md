@@ -138,6 +138,6 @@ code = ExtendedSmallMessage(id_=47, days=30, type_=ExtendedSmallMessageType.SET_
 # Check if message ID was automatically incremented (extended messages may increment ID to avoid collisions)
 code.extended_message_id
 # outputs 47
-code.to_keycode9)
+code.to_keycode()
 # outputs 135 424 433 523 434
 ```
