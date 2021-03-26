@@ -322,7 +322,7 @@ class TestExtendedSmallMessage(TestCase):
             days=51,
             secret_key=secret_key)
 
-        self.assertEqual(27, message.extended_message_id)
+        self.assertEqual(27, message.final_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
@@ -360,7 +360,7 @@ class TestExtendedSmallMessage(TestCase):
             days=0,
             secret_key=secret_key)
 
-        self.assertEqual(834, message.extended_message_id)
+        self.assertEqual(834, message.final_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
@@ -392,7 +392,7 @@ class TestExtendedSmallMessage(TestCase):
             days=protocol.SmallMessage.UNLOCK_FLAG,
             secret_key=secret_key)
 
-        self.assertEqual(9, message.extended_message_id)
+        self.assertEqual(9, message.final_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
@@ -421,7 +421,7 @@ class TestExtendedSmallMessage(TestCase):
             days=0,
             secret_key=b"\xab" * 16)
 
-        self.assertEqual(4, message.extended_message_id)
+        self.assertEqual(4, message.final_message_id)
 
         body_bits = message.body
         self.assertEqual(1, body_bits[0:1].uint)
@@ -454,7 +454,7 @@ class TestExtendedSmallMessage(TestCase):
             days=915,
             secret_key=secret_key)
 
-        self.assertEqual(0, message.extended_message_id)
+        self.assertEqual(0, message.final_message_id)
         self.assertEqual("155 222 234 423 344", message.to_keycode())
 
         # Test vectors used for end-to-end testing on the embedded side
@@ -464,7 +464,7 @@ class TestExtendedSmallMessage(TestCase):
             days=1,
             secret_key=secret_key)
 
-        self.assertEqual(5, message.extended_message_id)
+        self.assertEqual(5, message.final_message_id)
         self.assertEqual("144 254 333 543 553", message.to_keycode())
 
         message = protocol.ExtendedSmallMessage(
@@ -473,7 +473,7 @@ class TestExtendedSmallMessage(TestCase):
             days=0,
             secret_key=secret_key)
 
-        self.assertEqual(22, message.extended_message_id)
+        self.assertEqual(22, message.final_message_id)
         self.assertEqual("133 432 252 333 332", message.to_keycode())
 
         message = protocol.ExtendedSmallMessage(
@@ -482,7 +482,7 @@ class TestExtendedSmallMessage(TestCase):
             days=protocol.SmallMessage.UNLOCK_FLAG,
             secret_key=secret_key)
 
-        self.assertEqual(60, message.extended_message_id)
+        self.assertEqual(60, message.final_message_id)
         self.assertEqual("123 245 222 535 225", message.to_keycode())
 
         message = protocol.ExtendedSmallMessage(
@@ -491,7 +491,7 @@ class TestExtendedSmallMessage(TestCase):
             days=365,
             secret_key=secret_key)
 
-        self.assertEqual(90, message.extended_message_id)
+        self.assertEqual(90, message.final_message_id)
         self.assertEqual("132 223 555 342 554", message.to_keycode())
 
         message = protocol.ExtendedSmallMessage(
@@ -500,7 +500,7 @@ class TestExtendedSmallMessage(TestCase):
             days=30,
             secret_key=secret_key)
 
-        self.assertEqual(120, message.extended_message_id)
+        self.assertEqual(120, message.final_message_id)
         self.assertEqual("143 525 243 432 322", message.to_keycode())
 
 

@@ -481,7 +481,7 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
     EXTENDED_SMALL_FIRMWARE_RECEIPT_WINDOW_IDS_BELOW = 23
 
     def __repr__(self):
-        return "{}({extended_message_id!r}, {body!r})".format(self.__class__.__name__, **self.__dict__)
+        return "{}({final_message_id!r}, {body!r})".format(self.__class__.__name__, **self.__dict__)
 
     def __init__(self, type_, **kwargs):
         bits = bitstring.pack(
@@ -546,7 +546,7 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
                 auth=auth
             )
 
-            self.extended_message_id = final_id
+            self.final_message_id = final_id
 
         else:
             raise ValueError("unsupported value for 'type_'")
