@@ -447,6 +447,19 @@ class ExtendedSmallMessageType(enum.Enum):
     SET_CREDIT_WIPE_RESTRICTED_FLAG = (0, 2)
 
 
+class ExtendedSmallMessageIdInvalidError(Exception):
+    """The ExtendedSmallMessage cannot be created with the ID requested.
+
+    This is typically raised if a potential MAC/auth collision exists within the
+    'receipt window' for the keycode; that is, creating this same
+    `ExtendedSmallMessage` with a different ID close to the requested ID will
+    result in the same auth/MAC field.
+
+    If this error is raised, attempt to create the keycode again after
+    incrementing the ID by 1.
+    """
+
+
 class ExtendedSmallMessage(PassthroughSmallMessage):
     """'Extended' small keycodes carried inside a Passthrough message.
 
@@ -515,6 +528,12 @@ class ExtendedSmallMessage(PassthroughSmallMessage):
                 if auth is None:
                     logger.info("Unable to use id %s due to collision.", final_id)
                     final_id += 1
+
+            if final_id != id_:
+                raise ExtendedSmallMessageIdInvalidError(
+                    "ID {} yields MAC collision, next valid ID is {}.".format(
+                        id_, final_id)
+                )
 
             assert (
                 final_id <

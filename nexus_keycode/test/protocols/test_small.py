@@ -309,9 +309,16 @@ class TestExtendedSmallMessage(TestCase):
         secret_key = b"\xab" * 16
 
         # Expect collision at message ID 26, updated to 27
+        with self.assertRaises(protocol.ExtendedSmallMessageIdInvalidError):
+            protocol.ExtendedSmallMessage(
+                protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+                id_=26,
+                days=51,
+                secret_key=secret_key
+            )
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
-            id_=26,
+            id_=27,
             days=51,
             secret_key=secret_key)
 
@@ -339,12 +346,19 @@ class TestExtendedSmallMessage(TestCase):
 
         self.assertEqual("153 422 352 252 245", message.to_keycode())
 
-        # Expect collision at ID 861
+        # Expect collision at message ID 833
+        with self.assertRaises(protocol.ExtendedSmallMessageIdInvalidError):
+            protocol.ExtendedSmallMessage(
+                protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
+                id_=833,
+                days=0,
+                secret_key=secret_key
+            )
         message = protocol.ExtendedSmallMessage(
             protocol.ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG,
-            id_=833,
+            id_=834,
             days=0,
-            secret_key=b"\xab" * 16)
+            secret_key=secret_key)
 
         self.assertEqual(834, message.extended_message_id)
 

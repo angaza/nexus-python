@@ -134,10 +134,16 @@ CustomCommandSmallMessage(id_=46, type_=CustomCommandSmallMessageType.WIPE_RESTR
 Set Credit + Wipe Custom "Restricted Flag"
 
 ```python
-code = ExtendedSmallMessage(id_=47, days=30, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key)
-# Check if message ID was automatically incremented (extended messages may increment ID to avoid collisions)
-code.extended_message_id
-# outputs 47
-code.to_keycode()
-# outputs 135 242 352 334 254
+# Creating a message of this type *may* lead to a 'message ID collision',
+# meaning the message cannot be unambiguously interpreted by the unit
+# (it might be mistaken for a different message if entered into the unit).
+# If this occurs, an `ExtendedSmallMessageIdInvalidError` error will be raised.
+# Typically incrementing the ID by 1 and creating the message again will
+# succeed.
+
+In [25]: ExtendedSmallMessage(id_=50, days=84, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# raises `ExtendedSmallMessageIdInvalidError: ID 50 yields MAC collision, next valid ID is 51.`
+
+In [26]: ExtendedSmallMessage(id_=51, days=84, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# outputs 145 545 244 442 435
 ```
