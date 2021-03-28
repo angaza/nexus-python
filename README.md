@@ -103,13 +103,6 @@ AddCreditSmallMessage(id_=42, days=7, secret_key=secret_key).to_keycode()
 # outputs 135 242 422 455 244
 ```
 
-Update Credit
-
-```python
-UpdateCreditSmallMessage(id_=43, days=14, secret_key=secret_key).to_keycode()
-# outputs 145 222 453 233 453
-```
-
 Set Credit
 
 ```python
@@ -124,8 +117,33 @@ UnlockSmallMessage(id_=45, secret_key=secret_key).to_keycode()
 # outputs 152 323 254 454 322
 ```
 
-Wipe
+Wipe Message IDs
+
 ```python
 MaintenanceSmallMessage(type_=MaintenanceSmallMessageType.WIPE_IDS_ALL, secret_key=secret_key).to_keycode()
 # outputs 122 324 235 545 545
+```
+
+Wipe Custom "Restricted Flag"
+
+```python
+CustomCommandSmallMessage(id_=46, type_=CustomCommandSmallMessageType.WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# outputs 154 545 254 542 523
+```
+
+Set Credit + Wipe Custom "Restricted Flag"
+
+```python
+# Creating a message of this type *may* lead to a 'message ID collision',
+# meaning the message cannot be unambiguously interpreted by the unit
+# (it might be mistaken for a different message if entered into the unit).
+# If this occurs, an `ExtendedSmallMessageIdInvalidError` error will be raised.
+# Typically incrementing the ID by 1 and creating the message again will
+# succeed.
+
+In [25]: ExtendedSmallMessage(id_=50, days=84, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# raises `ExtendedSmallMessageIdInvalidError: ID 50 yields MAC collision, next valid ID is 51.`
+
+In [26]: ExtendedSmallMessage(id_=51, days=84, type_=ExtendedSmallMessageType.SET_CREDIT_WIPE_RESTRICTED_FLAG, secret_key=secret_key).to_keycode()
+# outputs 145 545 244 442 435
 ```
