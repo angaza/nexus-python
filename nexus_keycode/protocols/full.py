@@ -8,6 +8,7 @@ from nexus_keycode.protocols.utils import pseudorandom_bits
 
 NEXUS_MODULE_VERSION_STRING = "1.0.0"
 
+
 @enum.unique
 class FullMessageWipeFlags(enum.Enum):
     TARGET_FLAGS_0 = 0  #: Wipe state, except for recvd-msgs bitmask
@@ -25,6 +26,7 @@ class FullMessageType(enum.Enum):
     FACTORY_ALLOW_TEST = 4
     FACTORY_OQC_TEST = 5
     FACTORY_DISPLAY_PAYG_ID = 6
+    PASSTHROUGH_COMMAND = 7
 
     @property
     def parsers(self):
@@ -43,6 +45,7 @@ class FullMessageType(enum.Enum):
             cls.FACTORY_ALLOW_TEST: {"reserved": int},
             cls.FACTORY_OQC_TEST: {"reserved": int},
             cls.FACTORY_DISPLAY_PAYG_ID: {"reserved": int},
+            cls.PASSTHROUGH_COMMAND: {"application_id": int, "opaque_data": int},
         }
 
         return parsers[self]
@@ -107,14 +110,16 @@ class BaseFullMessage(object):
             assert len(body) == 0
             self.body_int = 0
             assert full_id == 0
-            self.header = "{0}".format(self.message_type.value)  # ignore full_id
+            self.header = u"{0}".format(self.message_type.value)  # ignore full_id
 
         else:
             assert len(body) > 0
             # used in check -- uint32_t repr of deobscured body digits.
             self.body_int = int(body)
             # transmitted ID is 6-LSB (0x3F) of full ID
-            self.header = "{0}{1:02d}".format(self.message_type.value, (full_id & 0x3F))
+            self.header = u"{0}{1:02d}".format(
+                self.message_type.value, (full_id & 0x3F)
+            )
 
         self.mac = self._generate_mac()
 
@@ -123,11 +128,11 @@ class BaseFullMessage(object):
 
     def __repr__(self):
         return (
-            "{}.{}("
-            "{header!r}, "
-            "{body!r}, "
-            "{secret_key!r}, "
-            "is_factory={is_factory!r}))"
+            u"{}.{}("
+            u"{header!r}, "
+            u"{body!r}, "
+            u"{secret_key!r}, "
+            u"is_factory={is_factory!r}))"
         ).format(self.__class__.__module__, self.__class__.__name__, **self.__dict__)
 
     @classmethod
@@ -215,7 +220,13 @@ class BaseFullMessage(object):
         function.update(packed_for_check.bytes)
 
         # check/MAC is the lowest 6 decimal digits from the computed check
-        return "{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
+        return u"{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
+
+
+@enum.unique
+class PassthroughApplicationId(enum.Enum):
+    TO_PAYG_UART_PASSTHROUGH = 0
+    ASP_ORIGIN_COMMAND = 1
 
 
 class FullMessage(BaseFullMessage):
@@ -247,7 +258,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.ADD_CREDIT,
-            body="{0:05d}".format(hours),
+            body=u"{0:05d}".format(hours),
             secret_key=secret_key,
         )
 
@@ -267,7 +278,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.SET_CREDIT,
-            body="{0:05d}".format(hours),
+            body=u"{0:05d}".format(hours),
             secret_key=secret_key,
         )
 
@@ -285,7 +296,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.SET_CREDIT,
-            body="{0:05d}".format(cls.UNLOCK_FLAG_IN_HOURS),
+            body=u"{0:05d}".format(cls.UNLOCK_FLAG_IN_HOURS),
             secret_key=secret_key,
         )
 
@@ -312,7 +323,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.WIPE_STATE,
-            body="{0:1d}{1:04d}".format(0, flags.value),
+            body=u"{0:1d}{1:04d}".format(0, flags.value),
             secret_key=secret_key,
         )
 
