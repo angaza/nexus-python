@@ -75,7 +75,7 @@ class BaseFullMessage(object):
 
     Typically, you'll want to use one of the specific derived types instead.
 
-    :see: :class:`FactoryMessage`
+    :see: :class:`FactoryFullMessage`
     :see: :class:`FullMessage`
     """
 
@@ -107,7 +107,7 @@ class BaseFullMessage(object):
         self.body = body  # shorter body for 'factory' messages
 
         if self.is_factory is True:
-            #assert len(body) == 0
+            # assert len(body) == 0
             self.body_int = 0
             assert full_id == 0
             self.header = u"{0}".format(self.message_type.value)  # ignore full_id
@@ -191,9 +191,8 @@ class BaseFullMessage(object):
         keycode = self.header + self.body
 
         # Passthrough keycodes do not contain a MAC
-        if hasattr(self, 'mac'):
+        if hasattr(self, "mac"):
             keycode += self.mac
-
 
         if obscured or (obscured is not False and not self.is_factory):
             keycode = self.obscure(keycode)
@@ -354,7 +353,7 @@ class FactoryFullMessage(FullMessage):
         Message contains no body.
 
         :return: Message object of format FACTORY_ALLOW_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_ALLOW_TEST, body="")
 
@@ -367,7 +366,7 @@ class FactoryFullMessage(FullMessage):
         Message contains no body.
 
         :return: Message object of format FACTORY_OQC_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_OQC_TEST, body="")
 
@@ -381,13 +380,13 @@ class FactoryFullMessage(FullMessage):
         Message contians no body.
 
         :return: Message object of format FACTORY_DISPLAY_PAYG_ID_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_DISPLAY_PAYG_ID, body="")
 
     @classmethod
     def passthrough_command(cls, application_id, passthrough_digits):
-        # type: (PassthroughApplicationId, str)-> FactoryMessage
+        # type: (PassthroughApplicationId, str)-> FactoryFullMessage
         """Send a keycode which contains application-specific data, and
         will not be parsed by the embedded keycode library. Passthrough
         commands do not trigger any UI feedback (keycode accepted/etc) from the
@@ -407,12 +406,12 @@ class FactoryFullMessage(FullMessage):
         :param application_id: ID of device application processing this command
         :type id_: :class:`PassthroughCommandSubtypeIds`
         :return: Message object of format PASSTHROUGH_COMMAND
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         if not isinstance(application_id, PassthroughApplicationId):
             raise TypeError("Passthrough command requires an application ID.")
 
-        body = "{:d}{}".format(application_id.value, passthrough_digits)
+        body = u"{:d}{}".format(application_id.value, passthrough_digits)
 
         if len(body) == 13:
             # Once we append the Passthrough type ID, we'll be at 14 digits.
@@ -420,4 +419,4 @@ class FactoryFullMessage(FullMessage):
             # tokens.
             raise ValueError("Passthrough command cannot be 13 total digits.")
 
-        return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)    
+        return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)
