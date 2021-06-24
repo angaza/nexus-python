@@ -269,3 +269,18 @@ class TestFactoryFullMessage(TestCase):
         )
         self.assertEqual(msg.body, "")
         self.assertEqual("*634 776 5#", keycode)
+
+
+    def test_passthrough_command__channel_command__expected(self):
+        # Send an ASP/Channel command via passthrough in keycodev1 protocol
+        msg = protocol.FactoryFullMessage.passthrough_command(
+            protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
+            passthrough_digits='9238284782879'
+        )
+        self.assertEqual(
+            msg.header,
+            "{:01d}".format(
+                protocol.FullMessageType.PASSTHROUGH_COMMAND.value))
+        # passthrough "Application ID" = 0
+        self.assertEqual(msg.body, '09238284782879')
+        self.assertEqual(msg.to_keycode(), "*709 238 284 782 879#")

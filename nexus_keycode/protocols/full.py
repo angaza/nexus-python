@@ -107,7 +107,7 @@ class BaseFullMessage(object):
         self.body = body  # shorter body for 'factory' messages
 
         if self.is_factory is True:
-            assert len(body) == 0
+            #assert len(body) == 0
             self.body_int = 0
             assert full_id == 0
             self.header = u"{0}".format(self.message_type.value)  # ignore full_id
@@ -121,7 +121,9 @@ class BaseFullMessage(object):
                 self.message_type.value, (full_id & 0x3F)
             )
 
-        self.mac = self._generate_mac()
+        # no need to generate MAC for passthrough keycode
+        if self.message_type != FullMessageType.PASSTHROUGH_COMMAND:
+            self.mac = self._generate_mac()
 
     def __str__(self):
         return self.to_keycode(obscured=False)
@@ -186,7 +188,12 @@ class BaseFullMessage(object):
         :rtype: :class:`str`
         """
 
-        keycode = self.header + self.body + self.mac
+        keycode = self.header + self.body
+
+        # Passthrough keycodes do not contain a MAC
+        if hasattr(self, 'mac'):
+            keycode += self.mac
+
 
         if obscured or (obscured is not False and not self.is_factory):
             keycode = self.obscure(keycode)
@@ -226,7 +233,7 @@ class BaseFullMessage(object):
 @enum.unique
 class PassthroughApplicationId(enum.Enum):
     TO_PAYG_UART_PASSTHROUGH = 0
-    ASP_ORIGIN_COMMAND = 1
+    RESERVED = 1
 
 
 class FullMessage(BaseFullMessage):
@@ -377,3 +384,40 @@ class FactoryFullMessage(FullMessage):
         :rtype: :class:`FactoryMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_DISPLAY_PAYG_ID, body="")
+
+    @classmethod
+    def passthrough_command(cls, application_id, passthrough_digits):
+        # type: (PassthroughApplicationId, str)-> FactoryMessage
+        """Send a keycode which contains application-specific data, and
+        will not be parsed by the embedded keycode library. Passthrough
+        commands do not trigger any UI feedback (keycode accepted/etc) from the
+        PAYG firmware library, and instead defer any activity at all to
+        the final application which receives and parses the passthrough
+        command.
+
+        Warning: passthrough commands *do not* have any MAC, and are not
+        validated in any way by the PAYG library in devices - the passthrough
+        `subtype ID` is examined, and the message is forwarded onward
+        accordingly. Applications that use passthrough command should include
+        integrity checks on the transmitted data inside the message body.
+
+        kwargs contains any application-specific data that will be used
+        to generate the body of this keycodwe.
+
+        :param application_id: ID of device application processing this command
+        :type id_: :class:`PassthroughCommandSubtypeIds`
+        :return: Message object of format PASSTHROUGH_COMMAND
+        :rtype: :class:`FactoryMessage`
+        """
+        if not isinstance(application_id, PassthroughApplicationId):
+            raise TypeError("Passthrough command requires an application ID.")
+
+        body = "{:d}{}".format(application_id.value, passthrough_digits)
+
+        if len(body) == 13:
+            # Once we append the Passthrough type ID, we'll be at 14 digits.
+            # Firmware uses 14-digits to unambiguously identify 'activation'
+            # tokens.
+            raise ValueError("Passthrough command cannot be 13 total digits.")
+
+        return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)    
