@@ -277,6 +277,7 @@ class TestFactoryFullMessage(TestCase):
             protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
             passthrough_digits="9238284782879",
         )
+        self.assertEqual(msg.PassthroughApplicationId,0)
         self.assertEqual(
             msg.header,
             u"{:01d}".format(protocol.FullMessageType.PASSTHROUGH_COMMAND.value),
