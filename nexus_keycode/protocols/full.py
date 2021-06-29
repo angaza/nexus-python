@@ -26,7 +26,8 @@ class FullMessageType(enum.Enum):
     FACTORY_ALLOW_TEST = 4
     FACTORY_OQC_TEST = 5
     FACTORY_DISPLAY_PAYG_ID = 6
-    PASSTHROUGH_COMMAND = 7
+    RESERVE = 7
+    PASSTHROUGH_COMMAND = 8
 
     @property
     def parsers(self):
@@ -121,6 +122,7 @@ class BaseFullMessage(object):
                 self.message_type.value, (full_id & 0x3F)
             )
 
+        self.mac = None
         # no need to generate MAC for passthrough keycode
         if self.message_type != FullMessageType.PASSTHROUGH_COMMAND:
             self.mac = self._generate_mac()
@@ -390,21 +392,18 @@ class FactoryFullMessage(FullMessage):
         """Send a keycode which contains application-specific data, and
         will not be parsed by the embedded keycode library. Passthrough
         commands do not trigger any UI feedback (keycode accepted/etc) from the
-        PAYG firmware library, and instead defer any activity at all to
+        Nexus Keycode firmware library, and instead defer any activity at all to
         the final application which receives and parses the passthrough
         command.
 
         Warning: passthrough commands *do not* have any MAC, and are not
-        validated in any way by the PAYG library in devices - the passthrough
+        validated in any way by the Nexus library in devices - the passthrough
         `subtype ID` is examined, and the message is forwarded onward
         accordingly. Applications that use passthrough command should include
         integrity checks on the transmitted data inside the message body.
 
-        kwargs contains any application-specific data that will be used
-        to generate the body of this keycodwe.
-
         :param application_id: ID of device application processing this command
-        :type id_: :class:`PassthroughCommandSubtypeIds`
+        :type application_id: :class:`PassthroughApplicationId`
         :return: Message object of format PASSTHROUGH_COMMAND
         :rtype: :class:`FactoryFullMessage`
         """
@@ -417,6 +416,6 @@ class FactoryFullMessage(FullMessage):
             # Once we append the Passthrough type ID, we'll be at 14 digits.
             # Firmware uses 14-digits to unambiguously identify 'activation'
             # tokens.
-            raise ValueError("Passthrough command cannot be 13 total digits.")
+            raise ValueError("Passthrough body cannot be 13 total digits.")
 
         return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)

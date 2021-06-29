@@ -272,7 +272,7 @@ class TestFactoryFullMessage(TestCase):
         self.assertEqual("*634 776 5#", keycode)
 
     def test_passthrough_command__channel_command__expected(self):
-        # Send an ASP/Channel command via passthrough in keycodev1 protocol
+        # Send an arbitrary PAYG_UART_PASSTHROUGH message
         msg = protocol.FactoryFullMessage.passthrough_command(
             protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
             passthrough_digits="9238284782879",
