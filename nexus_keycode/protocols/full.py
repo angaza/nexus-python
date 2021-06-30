@@ -91,7 +91,7 @@ class BaseFullMessage(object):
         :param message_type: integer value for the message type
         :type message_type: :class:`FullMessageType`
         :param body: arbitrary digits of message body
-        :type body: :class:`bytes`
+        :type body: :class:`string`
         :param secret_key: secret hash key (requires 16 bytes, uses first 16)
         :type secret_key: `bytes`
         """
@@ -108,8 +108,8 @@ class BaseFullMessage(object):
         self.body = body  # shorter body for 'factory' messages
 
         if self.is_factory is True:
-            # assert len(body) == 0
-            self.body_int = 0
+            if self.body == "":
+                self.body_int = 0
             assert full_id == 0
             self.header = u"{0}".format(self.message_type.value)  # ignore full_id
 
