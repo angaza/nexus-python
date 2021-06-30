@@ -278,6 +278,7 @@ class TestFactoryFullMessage(TestCase):
             passthrough_digits="9238284782879",
         )
         self.assertEqual(msg.PassthroughApplicationId,0)
+        self.assertEqual(len(msg.body), 13)
         self.assertEqual(
             msg.header,
             u"{:01d}".format(protocol.FullMessageType.PASSTHROUGH_COMMAND.value),
