@@ -404,6 +404,7 @@ class FactoryFullMessage(FullMessage):
 
         :param application_id: ID of device application processing this command
         :type application_id: :class:`PassthroughApplicationId`
+        :type passthrough_digits: :class:`string`
         :return: Message object of format PASSTHROUGH_COMMAND
         :rtype: :class:`FactoryFullMessage`
         """
