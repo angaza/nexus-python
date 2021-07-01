@@ -286,3 +286,14 @@ class TestFactoryFullMessage(TestCase):
         # passthrough "Application ID" = 0
         self.assertEqual(msg.body, "09238284782879")
         self.assertEqual(msg.to_keycode(), "*809 238 284 782 879#")
+
+    def test_passthrough_command__body_length_error__value_error_expected(self):
+        self.assertRaises(
+            ValueError,
+            self.assertRaises(
+                ValueError,
+                protocol.FactoryFullMessage.passthrough_command,
+                protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
+                passthrough_digits="238284782879",
+            ),
+        )
