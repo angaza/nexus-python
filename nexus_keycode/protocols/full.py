@@ -193,7 +193,7 @@ class BaseFullMessage(object):
         keycode = self.header + self.body
 
         # Passthrough keycodes do not contain a MAC
-        if hasattr(self, "mac"):
+        if self.mac is not None:
             keycode += self.mac
 
         if obscured or (obscured is not False and not self.is_factory):

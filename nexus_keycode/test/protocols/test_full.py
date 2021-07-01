@@ -277,12 +277,12 @@ class TestFactoryFullMessage(TestCase):
             protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
             passthrough_digits="9238284782879",
         )
-        self.assertEqual(msg.PassthroughApplicationId,0)
-        self.assertEqual(len(msg.body), 13)
+        self.assertEqual(msg.full_id, 0)
+        self.assertEqual(len(msg.body), 14)
         self.assertEqual(
             msg.header,
             u"{:01d}".format(protocol.FullMessageType.PASSTHROUGH_COMMAND.value),
         )
         # passthrough "Application ID" = 0
         self.assertEqual(msg.body, "09238284782879")
-        self.assertEqual(msg.to_keycode(), "*709 238 284 782 879#")
+        self.assertEqual(msg.to_keycode(), "*809 238 284 782 879#")
