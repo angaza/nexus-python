@@ -22,11 +22,11 @@ class FullMessageType(enum.Enum):
     ADD_CREDIT = 0
     SET_CREDIT = 1
     WIPE_STATE = 2
-    RESERVED = 3
+    RESERVED_TYPE_ID_3 = 3
     FACTORY_ALLOW_TEST = 4
     FACTORY_OQC_TEST = 5
     FACTORY_DISPLAY_PAYG_ID = 6
-    RESERVED = 7
+    RESERVED_TYPE_ID_7 = 7
     PASSTHROUGH_COMMAND = 8
 
     @property
