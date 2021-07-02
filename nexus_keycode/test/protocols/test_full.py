@@ -244,7 +244,7 @@ class TestFactoryFullMessage(TestCase):
 
         self.assertEqual(
             msg.header,
-            "{:01d}".format(protocol.FullMessageType.FACTORY_ALLOW_TEST.value),
+            u"{:01d}".format(protocol.FullMessageType.FACTORY_ALLOW_TEST.value),
         )
         self.assertEqual(msg.body, "")
         self.assertEqual("*406 498 3#", keycode)
@@ -254,7 +254,8 @@ class TestFactoryFullMessage(TestCase):
         keycode = msg.to_keycode()
 
         self.assertEqual(
-            msg.header, "{:01d}".format(protocol.FullMessageType.FACTORY_OQC_TEST.value)
+            msg.header,
+            u"{:01d}".format(protocol.FullMessageType.FACTORY_OQC_TEST.value),
         )
         self.assertEqual(msg.body, "")
         self.assertEqual("*577 043 3#", keycode)
@@ -265,7 +266,39 @@ class TestFactoryFullMessage(TestCase):
 
         self.assertEqual(
             msg.header,
-            "{:01d}".format(protocol.FullMessageType.FACTORY_DISPLAY_PAYG_ID.value),
+            u"{:01d}".format(protocol.FullMessageType.FACTORY_DISPLAY_PAYG_ID.value),
         )
         self.assertEqual(msg.body, "")
         self.assertEqual("*634 776 5#", keycode)
+
+    def test_passthrough_command__channel_command__expected(self):
+        # Send an arbitrary PAYG_UART_PASSTHROUGH message
+        msg = protocol.FactoryFullMessage.passthrough_command(
+            protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
+            passthrough_digits="9238284782879",
+        )
+        self.assertEqual(msg.full_id, 0)
+        self.assertEqual(len(msg.body), 14)
+        self.assertEqual(
+            msg.header,
+            u"{:01d}".format(protocol.FullMessageType.PASSTHROUGH_COMMAND.value),
+        )
+        # passthrough "Application ID" = 0
+        self.assertEqual(msg.body, "09238284782879")
+        self.assertEqual(msg.to_keycode(), "*809 238 284 782 879#")
+
+    def test_passthrough_command__body_length_error__value_error_expected(self):
+        self.assertRaises(
+            ValueError,
+            protocol.FactoryFullMessage.passthrough_command,
+            protocol.PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH,
+            passthrough_digits="238284782879",
+        )
+
+    def test_passthrough_command__application_id_error__type_error_expected(self):
+        self.assertRaises(
+            TypeError,
+            protocol.FactoryFullMessage.passthrough_command,
+            2,
+            passthrough_digits="09238284782879",
+        )

@@ -8,6 +8,7 @@ from nexus_keycode.protocols.utils import pseudorandom_bits
 
 NEXUS_MODULE_VERSION_STRING = "1.0.0"
 
+
 @enum.unique
 class FullMessageWipeFlags(enum.Enum):
     TARGET_FLAGS_0 = 0  #: Wipe state, except for recvd-msgs bitmask
@@ -21,10 +22,12 @@ class FullMessageType(enum.Enum):
     ADD_CREDIT = 0
     SET_CREDIT = 1
     WIPE_STATE = 2
-    RESERVED = 3
+    RESERVED_TYPE_ID_3 = 3
     FACTORY_ALLOW_TEST = 4
     FACTORY_OQC_TEST = 5
     FACTORY_DISPLAY_PAYG_ID = 6
+    RESERVED_TYPE_ID_7 = 7
+    PASSTHROUGH_COMMAND = 8
 
     @property
     def parsers(self):
@@ -43,6 +46,7 @@ class FullMessageType(enum.Enum):
             cls.FACTORY_ALLOW_TEST: {"reserved": int},
             cls.FACTORY_OQC_TEST: {"reserved": int},
             cls.FACTORY_DISPLAY_PAYG_ID: {"reserved": int},
+            cls.PASSTHROUGH_COMMAND: {"application_id": int, "opaque_data": int},
         }
 
         return parsers[self]
@@ -72,7 +76,7 @@ class BaseFullMessage(object):
 
     Typically, you'll want to use one of the specific derived types instead.
 
-    :see: :class:`FactoryMessage`
+    :see: :class:`FactoryFullMessage`
     :see: :class:`FullMessage`
     """
 
@@ -87,7 +91,7 @@ class BaseFullMessage(object):
         :param message_type: integer value for the message type
         :type message_type: :class:`FullMessageType`
         :param body: arbitrary digits of message body
-        :type body: :class:`bytes`
+        :type body: str
         :param secret_key: secret hash key (requires 16 bytes, uses first 16)
         :type secret_key: `bytes`
         """
@@ -104,30 +108,35 @@ class BaseFullMessage(object):
         self.body = body  # shorter body for 'factory' messages
 
         if self.is_factory is True:
-            assert len(body) == 0
-            self.body_int = 0
+            if self.body == "":
+                self.body_int = 0
             assert full_id == 0
-            self.header = "{0}".format(self.message_type.value)  # ignore full_id
+            self.header = u"{0}".format(self.message_type.value)  # ignore full_id
 
         else:
             assert len(body) > 0
             # used in check -- uint32_t repr of deobscured body digits.
             self.body_int = int(body)
             # transmitted ID is 6-LSB (0x3F) of full ID
-            self.header = "{0}{1:02d}".format(self.message_type.value, (full_id & 0x3F))
+            self.header = u"{0}{1:02d}".format(
+                self.message_type.value, (full_id & 0x3F)
+            )
 
-        self.mac = self._generate_mac()
+        self.mac = None
+        # no need to generate MAC for passthrough keycode
+        if self.message_type != FullMessageType.PASSTHROUGH_COMMAND:
+            self.mac = self._generate_mac()
 
     def __str__(self):
         return self.to_keycode(obscured=False)
 
     def __repr__(self):
         return (
-            "{}.{}("
-            "{header!r}, "
-            "{body!r}, "
-            "{secret_key!r}, "
-            "is_factory={is_factory!r}))"
+            u"{}.{}("
+            u"{header!r}, "
+            u"{body!r}, "
+            u"{secret_key!r}, "
+            u"is_factory={is_factory!r}))"
         ).format(self.__class__.__module__, self.__class__.__name__, **self.__dict__)
 
     @classmethod
@@ -181,7 +190,11 @@ class BaseFullMessage(object):
         :rtype: :class:`str`
         """
 
-        keycode = self.header + self.body + self.mac
+        keycode = self.header + self.body
+
+        # Passthrough keycodes do not contain a MAC
+        if self.mac is not None:
+            keycode += self.mac
 
         if obscured or (obscured is not False and not self.is_factory):
             keycode = self.obscure(keycode)
@@ -215,7 +228,13 @@ class BaseFullMessage(object):
         function.update(packed_for_check.bytes)
 
         # check/MAC is the lowest 6 decimal digits from the computed check
-        return "{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
+        return u"{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
+
+
+@enum.unique
+class PassthroughApplicationId(enum.Enum):
+    TO_PAYG_UART_PASSTHROUGH = 0
+    RESERVED = 1
 
 
 class FullMessage(BaseFullMessage):
@@ -247,7 +266,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.ADD_CREDIT,
-            body="{0:05d}".format(hours),
+            body=u"{0:05d}".format(hours),
             secret_key=secret_key,
         )
 
@@ -267,7 +286,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.SET_CREDIT,
-            body="{0:05d}".format(hours),
+            body=u"{0:05d}".format(hours),
             secret_key=secret_key,
         )
 
@@ -285,7 +304,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.SET_CREDIT,
-            body="{0:05d}".format(cls.UNLOCK_FLAG_IN_HOURS),
+            body=u"{0:05d}".format(cls.UNLOCK_FLAG_IN_HOURS),
             secret_key=secret_key,
         )
 
@@ -312,7 +331,7 @@ class FullMessage(BaseFullMessage):
         return cls(
             full_id=id_,
             message_type=FullMessageType.WIPE_STATE,
-            body="{0:1d}{1:04d}".format(0, flags.value),
+            body=u"{0:1d}{1:04d}".format(0, flags.value),
             secret_key=secret_key,
         )
 
@@ -336,7 +355,7 @@ class FactoryFullMessage(FullMessage):
         Message contains no body.
 
         :return: Message object of format FACTORY_ALLOW_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_ALLOW_TEST, body="")
 
@@ -349,7 +368,7 @@ class FactoryFullMessage(FullMessage):
         Message contains no body.
 
         :return: Message object of format FACTORY_OQC_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_OQC_TEST, body="")
 
@@ -363,6 +382,42 @@ class FactoryFullMessage(FullMessage):
         Message contians no body.
 
         :return: Message object of format FACTORY_DISPLAY_PAYG_ID_TEST
-        :rtype: :class:`FactoryMessage`
+        :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_DISPLAY_PAYG_ID, body="")
+
+    @classmethod
+    def passthrough_command(cls, application_id, passthrough_digits):
+        # type: (PassthroughApplicationId, str)-> FactoryFullMessage
+        """Send a keycode which contains application-specific data, and
+        will not be parsed by the embedded keycode library. Passthrough
+        commands do not trigger any UI feedback (keycode accepted/etc) from the
+        Nexus Keycode firmware library, and instead defer any activity at all to
+        the final application which receives and parses the passthrough
+        command.
+
+        Warning: passthrough commands *do not* have any MAC, and are not
+        validated in any way by the Nexus library in devices - the passthrough
+        `subtype ID` is examined, and the message is forwarded onward
+        accordingly. Applications that use passthrough command should include
+        integrity checks on the transmitted data inside the message body.
+
+        :param application_id: ID of device application processing this command
+        :type application_id: :class:`PassthroughApplicationId`
+        :param passthrough_digits: Digits that will be built into a message
+        :type passthrough_digits: :class:`string`
+        :return: Message object of format PASSTHROUGH_COMMAND
+        :rtype: :class:`FactoryFullMessage`
+        """
+        if not isinstance(application_id, PassthroughApplicationId):
+            raise TypeError("Passthrough command requires an application ID.")
+
+        body = u"{:d}{}".format(application_id.value, passthrough_digits)
+
+        if len(body) == 13:
+            # Once we append the message header, we'll be at 14 digits.
+            # Firmware uses 14-digits to unambiguously identify 'activation'
+            # tokens.
+            raise ValueError("Passthrough body cannot be 13 total digits.")
+
+        return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)
