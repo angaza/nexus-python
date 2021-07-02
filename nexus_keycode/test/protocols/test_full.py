@@ -297,3 +297,14 @@ class TestFactoryFullMessage(TestCase):
                 passthrough_digits="238284782879",
             ),
         )
+
+    def test_passthrough_command__application_id_error__type_error_expected(self):
+        self.assertRaises(
+            TypeError,
+            self.assertRaises(
+                TypeError,
+                protocol.FactoryFullMessage.passthrough_command,
+                2,
+                passthrough_digits="09238284782879",
+            ),
+        )

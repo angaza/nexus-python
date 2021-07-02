@@ -26,7 +26,7 @@ class FullMessageType(enum.Enum):
     FACTORY_ALLOW_TEST = 4
     FACTORY_OQC_TEST = 5
     FACTORY_DISPLAY_PAYG_ID = 6
-    RESERVE = 7
+    RESERVED = 7
     PASSTHROUGH_COMMAND = 8
 
     @property
@@ -91,7 +91,7 @@ class BaseFullMessage(object):
         :param message_type: integer value for the message type
         :type message_type: :class:`FullMessageType`
         :param body: arbitrary digits of message body
-        :type body: :class:`string`
+        :type body: str
         :param secret_key: secret hash key (requires 16 bytes, uses first 16)
         :type secret_key: `bytes`
         """
@@ -404,6 +404,7 @@ class FactoryFullMessage(FullMessage):
 
         :param application_id: ID of device application processing this command
         :type application_id: :class:`PassthroughApplicationId`
+        :param passthrough_digits: Digits that will be built into a message
         :type passthrough_digits: :class:`string`
         :return: Message object of format PASSTHROUGH_COMMAND
         :rtype: :class:`FactoryFullMessage`
@@ -414,7 +415,7 @@ class FactoryFullMessage(FullMessage):
         body = u"{:d}{}".format(application_id.value, passthrough_digits)
 
         if len(body) == 13:
-            # Once we append the Passthrough type ID, we'll be at 14 digits.
+            # Once we append the message header, we'll be at 14 digits.
             # Firmware uses 14-digits to unambiguously identify 'activation'
             # tokens.
             raise ValueError("Passthrough body cannot be 13 total digits.")
