@@ -1,25 +1,21 @@
-import math
-import sys
-
-import bitstring
 import siphash
+
+DEV_KEY = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 
 def compute_uart_security_key(secret_key):
     """Use a given secret key to generate a UART security key
     :param secret_key: secret key used to generate UART security key
-    :type secret_key: int
+    :type secret_key: str
     """
-    # use pythons default hashing algorithm to replicate already existing logic
-    # present in documentation on github - split the secret key in half
-    # then hash each half using the dev key (all 0s) as the key
-    # then put them back together 
 
-    key_part_a = secret_key[0:len(secret_key)//2]
-    key_part_b = secret_key[len(secret_key)//2:]
-    dev_key =b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    # Split given key in half
+    key_part_a = secret_key[0 : len(secret_key) // 2]
+    key_part_b = secret_key[len(secret_key) // 2 :]
 
-    hash_part_a = siphash.SipHash_2_4(dev_key, key_part_a).hash()
-    hash_part_b = siphash.SipHash_2_4(dev_key, key_part_b).hash()
+    # Hash both parts of the key - digest into hex strings
+    hash_part_a = siphash.SipHash_2_4(DEV_KEY, key_part_a).digest()
+    hash_part_b = siphash.SipHash_2_4(DEV_KEY, key_part_b).digest()
 
+    # Return hashed halves as completed uart_security_key
     return hash_part_a + hash_part_b
