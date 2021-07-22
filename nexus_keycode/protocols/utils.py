@@ -58,3 +58,12 @@ def pseudorandom_bits(seed_bits, output_len):
     output_bits = bitstring.Bits().join(chunk(i) for i in range(iterations))
 
     return output_bits[:output_len]
+
+
+def generate_mac(input_val, secret_key):
+    """
+    :type input_val: 'str'
+    :type secret_key: 'str'
+    """
+    function = siphash.SipHash_2_4(secret_key, input_val)
+    return u"{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
