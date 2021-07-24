@@ -65,5 +65,7 @@ def generate_mac(input_val, secret_key):
     :type input_val: 'str'
     :type secret_key: 'str'
     """
-    function = siphash.SipHash_2_4(secret_key, input_val)
+    key_bytes = secret_key.encode("utf-8")
+    input_bytes = input_val.encode("utf-8")
+    function = siphash.SipHash_2_4(key_bytes, int_to_bytes(input_bytes))
     return u"{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
