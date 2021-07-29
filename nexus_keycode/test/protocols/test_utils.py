@@ -24,8 +24,8 @@ class TestModule(TestCase):
             self.assertEqual(output, expected)
 
     def test_generate_mac__standard_input__output_expected(self):
-        input_val = "\x00"
-        secret_key = "\x38\x79\x2f\xfc\x24\x1c\x2b\xc7\xc8\xcb\xf6\x24\x59\x3b\x57\x63"
+        input_val = b"\x00"
+        secret_key = b"\x38\x79\x2f\xfc\x24\x1c\x2b\xc7\xc8\xcb\xf6\x24\x59\x3b\x57\x63"
         mac = generate_mac(input_val, secret_key)
 
         self.assertEqual(mac, "875838")

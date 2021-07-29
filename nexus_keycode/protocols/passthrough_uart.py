@@ -1,15 +1,14 @@
 import siphash
 
-NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = "\x00" * 16
+NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
 
 def compute_uart_security_key(secret_key):
     """Use a given secret key to generate a UART security key
     :param secret_key: secret key used to generate UART security key
-    :type secret_key: str
+    :type secret_key: byte
     """
-
-    # Only 16 bit keys are accepted
+    # Only 16 byte keys are accepted
     assert len(secret_key) == 16
     # Split given key in half
     key_part_a = secret_key[0 : len(secret_key) // 2]
