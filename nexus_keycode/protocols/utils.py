@@ -65,6 +65,6 @@ def generate_mac(input_val, secret_key):
     :type input_val: 'byte'
     :type secret_key: 'byte'
     """
-    # Return the last 6 digits of the siphash result
+    # Mask lower 32 bits of siphash then return the last 6 digits
     function = siphash.SipHash_2_4(secret_key, input_val)
     return u"{:06d}".format(function.hash() & 0xFFFFFFFF)[-6:]
