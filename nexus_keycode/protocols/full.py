@@ -426,5 +426,11 @@ class FactoryFullMessage(FullMessage):
 
     @classmethod
     def passthrough_uart_keycode_numeric_body_and_mac(cls, secret_key):
+        """Use a given secret key to generate a passthrough keycode
+        :param secret_key: secret key used to generate UART security key
+        :type secret_key: byte
+        """
         mac = compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key)
-        return FactoryFullMessage.passthrough_command(PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH, mac)
+        return FactoryFullMessage.passthrough_command(
+            PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH, mac
+        )
