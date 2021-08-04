@@ -34,7 +34,7 @@ def compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key):
     :type secret_key: byte
     """
     uart_security_key = compute_uart_security_key(secret_key)
-    mac = generate_mac("\x00", uart_security_key)
+    mac = generate_mac(b"\x00", uart_security_key)
     # Include the 0 we used to calculate MAC
     mac = "0" + mac
     return mac

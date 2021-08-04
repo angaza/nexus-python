@@ -4,8 +4,10 @@ import math
 import bitstring
 import siphash
 
+from nexus_keycode.protocols.passthrough_uart import (
+    compute_passthrough_uart_keycode_numeric_body_and_mac,
+)
 from nexus_keycode.protocols.utils import pseudorandom_bits
-from passthrough_uart import compute_passthrough_uart_keycode_numeric_body_and_mac
 
 NEXUS_MODULE_VERSION_STRING = "1.0.0"
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
