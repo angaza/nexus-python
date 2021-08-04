@@ -1,4 +1,5 @@
 import siphash
+from nexus_keycode.protocols.utils import generate_mac
 
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
@@ -24,3 +25,10 @@ def compute_uart_security_key(secret_key):
 
     # Return hashed halves as completed uart_security_key
     return hash_part_a + hash_part_b
+
+def compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key):
+    uart_security_key = compute_uart_security_key(secret_key)
+    mac = generate_mac('\x00',uart_security_key)
+    # Include the 0 we used to calculate MAC in the passthrough keycode
+    mac = '0'+ mac
+    return mac
