@@ -4,9 +4,13 @@ import math
 import bitstring
 import siphash
 
+from nexus_keycode.protocols.passthrough_uart import (
+    compute_passthrough_uart_keycode_numeric_body_and_mac,
+)
 from nexus_keycode.protocols.utils import pseudorandom_bits
 
 NEXUS_MODULE_VERSION_STRING = "1.0.0"
+NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
 
 @enum.unique
@@ -421,3 +425,14 @@ class FactoryFullMessage(FullMessage):
             raise ValueError("Passthrough body cannot be 13 total digits.")
 
         return cls(message_type=FullMessageType.PASSTHROUGH_COMMAND, body=body)
+
+    @classmethod
+    def passthrough_uart_keycode_numeric_body_and_mac(cls, secret_key):
+        """Use a given secret key to generate a passthrough keycode
+        :param secret_key: secret key used to generate UART security key
+        :type secret_key: byte
+        """
+        numeric_body_and_mac = compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key)
+        return cls.passthrough_command(
+            PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH, numeric_body_and_mac
+        )

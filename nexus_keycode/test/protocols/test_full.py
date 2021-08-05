@@ -302,3 +302,8 @@ class TestFactoryFullMessage(TestCase):
             2,
             passthrough_digits="09238284782879",
         )
+
+    def test_passthrough_uart_keycode_numeric_body_and_mac__standard_input__ok(self):
+        input_bytes = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+        passthrough_keycode = protocol.FactoryFullMessage.passthrough_uart_keycode_numeric_body_and_mac(input_bytes)
+        self.assertEqual(passthrough_keycode.to_keycode(), u"*800 875 838#")
