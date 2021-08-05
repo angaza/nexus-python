@@ -432,7 +432,7 @@ class FactoryFullMessage(FullMessage):
         :param secret_key: secret key used to generate UART security key
         :type secret_key: byte
         """
-        mac = compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key)
-        return FactoryFullMessage.passthrough_command(
-            PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH, mac
+        numeric_body_and_mac = compute_passthrough_uart_keycode_numeric_body_and_mac(secret_key)
+        return cls.passthrough_command(
+            PassthroughApplicationId.TO_PAYG_UART_PASSTHROUGH, numeric_body_and_mac
         )
