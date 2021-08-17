@@ -10,7 +10,7 @@ from nexus_keycode.protocols.passthrough_uart import (
     compute_passthrough_uart_keycode_numeric_body_and_mac,
 )
 from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
-from nexus_keycode.protocols.utils import pseudorandom_bits
+from nexus_keycode.protocols.utils import full_deobscure, full_obscure
 
 NEXUS_MODULE_VERSION_STRING = "2.0.0"
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
@@ -148,29 +148,11 @@ class BaseFullMessage(object):
 
     @classmethod
     def obscure(cls, digits, sign=1):
-
-        perturbed = list(map(int, list(digits)))
-
-        assert len(digits) == 14
-
-        # MAC digits are last 6 of perturbed, use uint32_t value as seed
-        packed_check = bitstring.pack("uintle:32", int(digits[-6:]))
-
-        # [0, 255] values; one for each body digit
-        # 8 body digits, 8 bytes (8 bits each), so 64 bits of output required
-        pr_bits = pseudorandom_bits(packed_check, 64)
-
-        for (i, d) in enumerate(perturbed[:8]):
-            # value [0, 255]
-            pr_value = pr_bits[i * 8 : (i * 8 + 8)].uint * sign
-            perturbed[i] += pr_value
-            perturbed[i] %= 10
-
-        return "".join(map(str, perturbed))
+        return full_obscure(digits, sign)
 
     @classmethod
     def deobscure(cls, digits):
-        return cls.obscure(digits, sign=-1)
+        return full_deobscure(digits)
 
     def to_keycode(
         self, prefix="*", suffix="#", separator=" ", group_len=3, obscured=None
@@ -204,7 +186,9 @@ class BaseFullMessage(object):
             keycode += self.mac
 
         if obscured or (obscured is not False and not self.is_factory):
-            keycode = self.obscure(keycode)
+            # Obscured activation keycodes are always 14 digits in length
+            assert len(keycode) == 14
+            keycode = full_obscure(keycode)
 
         keycode = separator.join(
             keycode[i * group_len : (i + 1) * group_len]
@@ -404,6 +388,7 @@ class FactoryFullMessage(FullMessage):
             raise TypeError("Missing Nexus Channel Origin Action.")
 
         origin_command = channel_action.build(**kwargs)
+        # Will prepend passthrough and subtype ID to the generated command
         return cls.passthrough_command(
             PassthroughApplicationId.CHANNEL_ORIGIN_COMMAND,
             origin_command.to_digits()

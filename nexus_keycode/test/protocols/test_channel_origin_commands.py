@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import nexus_keycode.protocols.channel_origin_commands as protocol
 
+
 class TestChannelOriginActions(TestCase):
 
     def setUp(self):

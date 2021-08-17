@@ -285,9 +285,9 @@ class TestFactoryFullMessage(TestCase):
             "{:01d}".format(
                 protocol.FullMessageType.PASSTHROUGH_COMMAND.value))
         # passthrough "Application ID" = 1 for Nexus Channel Origin Command
-        self.assertEqual(msg.body, '190382847429307')
+        self.assertEqual(msg.body, '129311191429307')
         # Adds leading '8' to indicate 'passthrough command'
-        self.assertEqual(msg.to_keycode(), "*819 038 284 742 930 7#")
+        self.assertEqual(msg.to_keycode(), "*812 931 119 142 930 7#")
 
     def test_passthrough_command__channel_command__expected(self):
         # Send an arbitrary PAYG_UART_PASSTHROUGH message

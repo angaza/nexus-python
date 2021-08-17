@@ -2,7 +2,12 @@ from unittest import TestCase
 
 import bitstring
 
-from nexus_keycode.protocols.utils import generate_mac, pseudorandom_bits
+from nexus_keycode.protocols.utils import (
+    full_deobscure,
+    full_obscure,
+    generate_mac,
+    pseudorandom_bits
+)
 
 
 class TestModule(TestCase):
@@ -22,6 +27,34 @@ class TestModule(TestCase):
             output = pseudorandom_bits(seed, expected.len)
 
             self.assertEqual(output, expected)
+
+    def test_full_obscure__spec_values__ok(self):
+        def assert_full_obscure_ok(message, obscured_digit_count, output):
+            self.assertEqual(full_obscure(message, obscured_digit_count=obscured_digit_count), output)
+
+        cases = [
+            ["12345678901250", 8, "57458927901250"],
+            ["12345678901241", 8, "05094833901241"],
+            ["00000000524232", 8, "57396884524232"],
+            ["00000000445755", 8, "03605158445755"],
+        ]
+
+        for case in cases:
+            assert_full_obscure_ok(*case)
+
+    def test_full_deobscure__spec_values__ok(self):
+        def assert_full_deobscure_ok(message, obscured_digit_count, output):
+            self.assertEqual(full_deobscure(message, obscured_digit_count=obscured_digit_count), output)
+
+        cases = [
+            ["57458927901250", 8, "12345678901250"],
+            ["05094833901241", 8, "12345678901241"],
+            ["57396884524232", 8, "00000000524232"],
+            ["03605158445755", 8, "00000000445755"],
+        ]
+
+        for case in cases:
+            assert_full_deobscure_ok(*case)
 
     def test_generate_mac__standard_input__output_expected(self):
         input_val = b"\x00"
