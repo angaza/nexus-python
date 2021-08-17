@@ -7,9 +7,10 @@ import siphash
 from nexus_keycode.protocols.passthrough_uart import (
     compute_passthrough_uart_keycode_numeric_body_and_mac,
 )
+from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
 from nexus_keycode.protocols.utils import pseudorandom_bits
 
-NEXUS_MODULE_VERSION_STRING = "1.1.0"
+NEXUS_MODULE_VERSION_STRING = "2.0.0"
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
 
@@ -238,7 +239,8 @@ class BaseFullMessage(object):
 @enum.unique
 class PassthroughApplicationId(enum.Enum):
     TO_PAYG_UART_PASSTHROUGH = 0
-    RESERVED = 1
+    # Used to convey Nexus Channel origin commands in a passthrough message
+    CHANNEL_ORIGIN_COMMAND = 1
 
 
 class FullMessage(BaseFullMessage):
@@ -389,6 +391,21 @@ class FactoryFullMessage(FullMessage):
         :rtype: :class:`FactoryFullMessage`
         """
         return cls(message_type=FullMessageType.FACTORY_DISPLAY_PAYG_ID, body="")
+
+    @classmethod
+    def passthrough_channel_origin_command(cls, channel_action, **kwargs):
+        # type: (ChannelOriginAction, dict[str, Any])->FactoryFullMessage
+        """Specific helper to create Nexus Channel origin commands.
+
+        These commands are conveyed in a Nexus Keycode Passthrough message."""
+        if not isinstance(channel_action, ChannelOriginAction):
+            raise TypeError("Missing Nexus Channel Origin Action.")
+
+        origin_command = channel_action.build(**kwargs)
+        return cls.passthrough_command(
+            PassthroughApplicationId.CHANNEL_ORIGIN_COMMAND,
+            origin_command.to_digits()
+        )
 
     @classmethod
     def passthrough_command(cls, application_id, passthrough_digits):
