@@ -4,6 +4,8 @@ import math
 import bitstring
 import siphash
 
+from typing import Any  # noqa F401
+
 from nexus_keycode.protocols.passthrough_uart import (
     compute_passthrough_uart_keycode_numeric_body_and_mac,
 )
@@ -385,7 +387,7 @@ class FactoryFullMessage(FullMessage):
 
         Allows for factory, warehouse, and field determination of PAYG ID.
 
-        Message contians no body.
+        Message contains no body.
 
         :return: Message object of format FACTORY_DISPLAY_PAYG_ID_TEST
         :rtype: :class:`FactoryFullMessage`
