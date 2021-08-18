@@ -100,8 +100,7 @@ These commands generate commands that are accepted by [Nexus Channel](https://ne
 "Controller" devices using the "Full Protocol". Typically, these are used
 to manage the secured link state of "Controller" and "Accessory" devices.
 
-See `protocols/channel_origin_commands.py` for a full list of command types
-to generate.
+See also: `protocols/channel_origin_commands.py`
 
 Create Nexus Channel Secured Link
 ```python
@@ -117,24 +116,7 @@ message = FactoryFullMessage.passthrough_channel_origin_command(
     controller_sym_key=b"\xCD" * 16,
 )
 message.to_keycode()
-# outputs *819 079 821 151 997 4#
-
-```
-
-Delete Nexus Channel Secured Link (Single Accessory Link)
-```python
-from nexus_keycode.protocols.full import FactoryFullMessage
-from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
-
-message = FactoryFullMessage.passthrough_channel_origin_command(
-	ChannelOriginAction.UNLINK_ACCESSORY,
-    accessory_nexus_id=0x000200003322,
-    controller_command_count=6,
-    controller_sym_key=b"\xCD" * 16,
-)
-message.to_keycode()
-# outputs *812 094 159 7#
-```
+# outputs *814 772 358 551 997 4#
 
 Delete Nexus Channel Secured Link (All Accessory Links)
 ```python
@@ -148,7 +130,7 @@ message = FactoryFullMessage.passthrough_channel_origin_command(
 )
 
 message.to_keycode()
-# outputs *810 003 592 81#
+# outputs *810 023 592 81#
 ```
 
 ### Small Protocol

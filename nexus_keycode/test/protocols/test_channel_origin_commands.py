@@ -23,7 +23,8 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '000018783')
+        # '000' obscured to '555'
+        self.assertEqual(digits, '555018783')
         self.assertEqual(token.type_code, 0)
         self.assertEqual(token.body, '00')
         self.assertEqual(token.auth, '018783')
@@ -36,7 +37,8 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '001906394')
+        # '001' obscured to '034'
+        self.assertEqual(digits, '034906394')
         self.assertEqual(token.type_code, 0)
         self.assertEqual(token.body, '01')
         self.assertEqual(token.auth, '906394')
@@ -50,7 +52,8 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '20536545')
+        # '20' obscured to '21'
+        self.assertEqual(digits, '21536545')
         self.assertEqual(token.type_code, 2)
         self.assertEqual(token.body, '0')
         self.assertEqual(token.auth, '536545')
@@ -64,7 +67,8 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '10244210')
+        # '10' obscured to '56'
+        self.assertEqual(digits, '56244210')
         self.assertEqual(token.type_code, 1)
         self.assertEqual(token.body, '0')
         self.assertEqual(token.auth, '244210')
@@ -80,7 +84,8 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '90445034581275')
+        # '90445034' obscured to '18591548'
+        self.assertEqual(digits, '18591548581275')
         self.assertEqual(token.type_code, 9)
         # body = truncated ASP ID + auth for accessory
         self.assertEqual(token.body, '0445034')
@@ -95,7 +100,8 @@ class TestChannelOriginCommandToken(TestCase):
     )
 
     def test_str__simple_token__expected_value_returned(self):
-        self.assertEqual(str(self.atoken), "212554433")
+        # '212' obscured to '222'
+        self.assertEqual(str(self.atoken), "222554433")
 
     def test_repr__simple_token__expected_snippets_present(self):
         repred = repr(self.atoken)
@@ -106,7 +112,8 @@ class TestChannelOriginCommandToken(TestCase):
         self.assertIn(repr(self.atoken.auth), repred)
 
     def test_to_digits__output_correct(self):
-        self.assertEqual('212554433', self.atoken.to_digits())
+        # '212' obscured to '222'
+        self.assertEqual('222554433', self.atoken.to_digits())
 
     def test_init__invalid_type__raises(self):
         self.assertRaises(
@@ -131,7 +138,8 @@ class TestGenericControllerActionToken(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '000018783')
+        # '000' obscured to '555'
+        self.assertEqual(digits, '555018783')
 
         # Interpreted as 'command type' by the ASP module in FW.
         self.assertEqual(token.type_code, 0)
@@ -150,7 +158,8 @@ class TestGenericControllerActionToken(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '001906394')
+        # '001' obscured to '034'
+        self.assertEqual(digits, '034906394')
 
         # Interpreted as 'command type' by the ASP module in FW.
         self.assertEqual(token.type_code, 0)
@@ -177,7 +186,8 @@ class TestSpecificLinkedAccessoryToken(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '23228427')
+        # '23' obscured to '98'
+        self.assertEqual(digits, '98228427')
 
         # Interpreted as 'command type' by the ASP module in FW.
         self.assertEqual(token.type_code, 2)
@@ -197,7 +207,8 @@ class TestSpecificLinkedAccessoryToken(TestCase):
             )
         )
         digits = token.to_digits()
-        self.assertEqual(digits, '13046876')
+        # '13' obscured to '62'
+        self.assertEqual(digits, '62046876')
 
         # Interpreted as 'command type' by the ASP module in FW.
         self.assertEqual(token.type_code, 1)
@@ -226,7 +237,8 @@ class TestLinkCommandToken(TestCase):
             controller_sym_key=self.controller_sym_key)
 
         digits = token.to_digits()
-        self.assertEqual(digits, '90382847429307')
+        # '90382847' obscured to '29311191'
+        self.assertEqual(digits, '29311191429307')
 
         # Interpreted as 'command type' by the ASP module in FW.
         self.assertEqual(token.type_code, 9)
