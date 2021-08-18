@@ -14,10 +14,9 @@ Devices which establish a secured link may access 'secured' resource methods
 on other devices (e.g. a controller securely linked to a controller may
 POST PAYG credit updates to a linked accessory).
 
-Currently supported operations:
+Currently supported operations in `nexus-embedded` (firmware):
 
     * Create secured link between controller and accessory (`LINK_ACCESSORY_MODE_3`)
-    * Delete secured link between controller and accessory (`UNLINK_ACCESSORY`)
     * Delete all secured links from controller (`UNLINK_ALL_ACCESSORIES`)
 
 For corresponding embedded device side logic, see:
@@ -32,11 +31,11 @@ class ChannelOriginAction(enum.Enum):
     """Business logic list of possible origin command actions."""
     # Delete all accessory links from a controller
     UNLINK_ALL_ACCESSORIES = object()
-    # Signal PAYG credit resource 'unlock' for all linked accessories
+    # Signal PAYG credit resource 'unlock' for all linked accessories (UNSUPPORTED)
     UNLOCK_ALL_ACCESSORIES = object()
-    # Signal PAYG credit resource 'unlock' for one specific accessory
+    # Signal PAYG credit resource 'unlock' for one specific accessory (UNSUPPORTED)
     UNLOCK_ACCESSORY = object()
-    # Delete link to one specific accessory
+    # Delete link to one specific accessory (UNSUPPORTED)
     UNLINK_ACCESSORY = object()
     # Create Nexus Channel secured link between controller and accessory
     LINK_ACCESSORY_MODE_3 = object()

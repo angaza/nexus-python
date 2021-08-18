@@ -109,14 +109,13 @@ from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
 
 message = FactoryFullMessage.passthrough_channel_origin_command(
 	ChannelOriginAction.LINK_ACCESSORY_MODE_3,
-    accessory_nexus_id=0x000200003322,
     controller_command_count=5,
     accessory_command_count=2,
     accessory_sym_key=b"\xAB" * 16,
     controller_sym_key=b"\xCD" * 16,
 )
 message.to_keycode()
-# outputs *814 772 358 551 997 4#
+# outputs *817 307 500 565 772#
 
 Delete Nexus Channel Secured Link (All Accessory Links)
 ```python
