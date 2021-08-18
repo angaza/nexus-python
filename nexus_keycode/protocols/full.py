@@ -12,7 +12,7 @@ from nexus_keycode.protocols.passthrough_uart import (
 from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
 from nexus_keycode.protocols.utils import full_deobscure, full_obscure
 
-NEXUS_MODULE_VERSION_STRING = "2.0.0"
+NEXUS_MODULE_VERSION_STRING = "1.1.0"
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
 
