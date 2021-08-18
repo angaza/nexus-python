@@ -76,7 +76,6 @@ class TestChannelOriginActions(TestCase):
     def test_link_challenge_mode_3_builder__ok(self):
         token = (
             protocol.ChannelOriginAction.LINK_ACCESSORY_MODE_3.build(
-                accessory_nexus_id=self.accessory_nexus_id,
                 controller_command_count=self.controller_command_count,
                 accessory_command_count=self.accessory_command_count,
                 accessory_sym_key=self.accessory_sym_key,
@@ -84,12 +83,12 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        # '90445034' obscured to '18591548'
-        self.assertEqual(digits, '18591548581275')
+        # '9445034' obscured to '0114964'
+        self.assertEqual(digits, '0114964304757')
         self.assertEqual(token.type_code, 9)
-        # body = truncated ASP ID + auth for accessory
-        self.assertEqual(token.body, '0445034')
-        self.assertEqual(token.auth, '581275')
+        # body = auth for accessory
+        self.assertEqual(token.body, '445034')
+        self.assertEqual(token.auth, '304757')
 
 
 class TestChannelOriginCommandToken(TestCase):
@@ -141,7 +140,7 @@ class TestGenericControllerActionToken(TestCase):
         # '000' obscured to '555'
         self.assertEqual(digits, '555018783')
 
-        # Interpreted as 'command type' by the ASP module in FW.
+        # Interpreted as 'command type' by the Nexus Channel module in FW.
         self.assertEqual(token.type_code, 0)
 
         # Command ID
@@ -161,7 +160,7 @@ class TestGenericControllerActionToken(TestCase):
         # '001' obscured to '034'
         self.assertEqual(digits, '034906394')
 
-        # Interpreted as 'command type' by the ASP module in FW.
+        # Interpreted as 'command type' by the Nexus Channel module in FW.
         self.assertEqual(token.type_code, 0)
 
         # Command ID
@@ -189,10 +188,10 @@ class TestSpecificLinkedAccessoryToken(TestCase):
         # '23' obscured to '98'
         self.assertEqual(digits, '98228427')
 
-        # Interpreted as 'command type' by the ASP module in FW.
+        # Interpreted as 'command type' by the Nexus Channel module in FW.
         self.assertEqual(token.type_code, 2)
 
-        # Truncated accessory ASP ID
+        # Truncated accessory Nexus Channel ID
         self.assertEqual(token.body, '3')
 
         # Origin authentication for this command
@@ -210,10 +209,10 @@ class TestSpecificLinkedAccessoryToken(TestCase):
         # '13' obscured to '62'
         self.assertEqual(digits, '62046876')
 
-        # Interpreted as 'command type' by the ASP module in FW.
+        # Interpreted as 'command type' by the Nexus Channel module in FW.
         self.assertEqual(token.type_code, 1)
 
-        # Truncated accessory ASP ID
+        # Truncated accessory Nexus ID
         self.assertEqual(token.body, '3')
 
         # Origin authentication for this command
@@ -224,29 +223,27 @@ class TestLinkCommandToken(TestCase):
     def setUp(self):
         self.accessory_sym_key = b'\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6'
         self.controller_sym_key = b'\xfe' * 8 + b'\xa2' * 8
-        self.accessory_nexus_id = 0x000200003322  # truncated device ID = 0
         self.controller_command_count = 15
         self.accessory_command_count = 2
 
     def test_challenge_mode_3__ok(self):
         token = protocol.LinkCommandToken.challenge_mode_3(
-            accessory_nexus_id=self.accessory_nexus_id,
             controller_command_count=self.controller_command_count,
             accessory_command_count=self.accessory_command_count,
             accessory_sym_key=self.accessory_sym_key,
             controller_sym_key=self.controller_sym_key)
 
         digits = token.to_digits()
-        # '90382847' obscured to '29311191'
-        self.assertEqual(digits, '29311191429307')
+        # '9382847' obscured to '6815536'
+        self.assertEqual(digits, '6815536632688')
 
-        # Interpreted as 'command type' by the ASP module in FW.
+        # Interpreted as 'command type' by the Nexus Channel module in FW.
         self.assertEqual(token.type_code, 9)
 
-        # Truncated accessory ASP ID + challenge result
-        self.assertEqual(token.body, '0382847')
+        # challenge result
+        self.assertEqual(token.body, '382847')
 
-        # Origin ASP module rejects token if this check doesn't match
+        # Origin Nexus Channel module rejects token if this check doesn't match
         # Required for Angaza keycode implementation, since 'passthrough'
         # messages don't perform authentication/validation on contents.
-        self.assertEqual(token.auth, '429307')
+        self.assertEqual(token.auth, '632688')

@@ -399,16 +399,15 @@ class LinkCommandToken(ChannelOriginCommandToken):
     @classmethod
     def challenge_mode_3(
             cls,
-            accessory_nexus_id,
             controller_command_count,
             accessory_command_count,
             accessory_sym_key,
             controller_sym_key):
-        # type: (int, int, int, str, str) -> ChannelOriginCommandToken
+        # type: (int, int, str, str) -> ChannelOriginCommandToken
         """ Resulting token:
 
         1-digit Origin Keycode Type ID (9)
-        7-digit body (1 digit Truncated Nexus ID, 6 "Challenge Result" digits)
+        6-digit body (6 "Challenge Result" digits)
         6-digit auth (controller authentication)
         """
 
@@ -432,28 +431,22 @@ class LinkCommandToken(ChannelOriginCommandToken):
         # 6-digits
         accessory_auth_digits = cls.digits_from_siphash(accessory_auth)
 
-        trunc_accessory_nexus_id = "{:01d}".format(
-            (accessory_nexus_id & 0xFFFFFFFF) % 10)
-
-        # This auth is used by the receiver of the origin command
-        # the receiver will unpack the truncated accessory Nexus ID and the
-        # challenge digits, and recompute a MAC using these. Only if the MAC
-        # is valid will the challenge digits be passed onwards to the accessory
+        # This auth is used by the receiver of the origin command.
+        # the receiver (controller) will unpack the challenge digits as
+        # a message 'body', and recompute a MAC using these. Only if the
+        # computed MAC is valid (matches the transmitted MAC)
+        # will the challenge digits be passed onward to the accessory.
         packed_auth_inputs = bitstring.pack(
             [
                 "uintle:32=controller_command_count",
                 "uintle:8=command_type_code",  # '9'
-                "uintle:8=trunc_accessory_nexus_id",
                 "uintle:32=challenge_digits_int",  # challenge digits as int
             ],
             controller_command_count=controller_command_count,
             command_type_code=command_type.value,
-            trunc_accessory_nexus_id=trunc_accessory_nexus_id,
             challenge_digits_int=int(accessory_auth_digits)
         )
-        assert len(packed_auth_inputs.tobytes()) == 10
-
-        body_digits = trunc_accessory_nexus_id + accessory_auth_digits
+        assert len(packed_auth_inputs.tobytes()) == 9
 
         auth = siphash.SipHash_2_4(
             controller_sym_key,
@@ -461,6 +454,6 @@ class LinkCommandToken(ChannelOriginCommandToken):
 
         return cls(
             type_=command_type,
-            body=body_digits,
+            body=accessory_auth_digits,
             auth=cls.digits_from_siphash(auth)
         )
