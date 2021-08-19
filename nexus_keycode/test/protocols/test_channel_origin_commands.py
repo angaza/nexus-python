@@ -7,12 +7,12 @@ class TestChannelOriginActions(TestCase):
 
     def setUp(self):
         self.controller_command_count = 15
-        # equivalent to authority ID 0x0102, device ID 0x94837158
-        # last 1 truncated digit of decimal device ID are '0'
-        self.accessory_nexus_id = 0x010294837158
+        # equivalent to authority ID 0x0102, device ID 0x2948372A4
+        # last 1 truncated digit of decimal device ID is '2'
+        self.accessory_nexus_id = 0x0102948372A4
         self.controller_sym_key = b'\xfe' * 8 + b'\xa2' * 8
         self.controller_nexus_id = 0x120003827145  # '2' truncated
-        self.accessory_sym_key = b'\xfa' * 8 + b'\x01' * 8
+        self.accessory_sym_key = b'\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6'
         self.accessory_command_count = 312
 
     def test_unlink_all_accessories_builder__ok(self):
@@ -52,11 +52,11 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        # '20' obscured to '21'
-        self.assertEqual(digits, '21536545')
+        # '22' obscured to '88'
+        self.assertEqual(digits, '88325773')
         self.assertEqual(token.type_code, 2)
-        self.assertEqual(token.body, '0')
-        self.assertEqual(token.auth, '536545')
+        self.assertEqual(token.body, '2')
+        self.assertEqual(token.auth, '325773')
 
     def test_unlock_specific_accessory_builder__ok(self):
         token = (
@@ -67,11 +67,11 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        # '10' obscured to '56'
-        self.assertEqual(digits, '56244210')
+        # '12' obscured to '89'
+        self.assertEqual(digits, '89214226')
         self.assertEqual(token.type_code, 1)
-        self.assertEqual(token.body, '0')
-        self.assertEqual(token.auth, '244210')
+        self.assertEqual(token.body, '2')
+        self.assertEqual(token.auth, '214226')
 
     def test_link_challenge_mode_3_builder__ok(self):
         token = (
@@ -83,12 +83,12 @@ class TestChannelOriginActions(TestCase):
             )
         )
         digits = token.to_digits()
-        # '9445034' obscured to '0114964'
-        self.assertEqual(digits, '0114964304757')
+        # '9707962' obscured to '0114964'
+        self.assertEqual(digits, '4780123960006')
         self.assertEqual(token.type_code, 9)
         # body = auth for accessory
-        self.assertEqual(token.body, '445034')
-        self.assertEqual(token.auth, '304757')
+        self.assertEqual(token.body, '707962')
+        self.assertEqual(token.auth, '960006')
 
 
 class TestChannelOriginCommandToken(TestCase):
