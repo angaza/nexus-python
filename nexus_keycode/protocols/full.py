@@ -147,8 +147,8 @@ class BaseFullMessage(object):
         ).format(self.__class__.__module__, self.__class__.__name__, **self.__dict__)
 
     @classmethod
-    def obscure(cls, digits, sign=1):
-        return full_obscure(digits, sign)
+    def obscure(cls, digits):
+        return full_obscure(digits)
 
     @classmethod
     def deobscure(cls, digits):
