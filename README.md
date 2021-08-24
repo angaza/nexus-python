@@ -116,6 +116,7 @@ message = FactoryFullMessage.passthrough_channel_origin_command(
 )
 message.to_keycode()
 # outputs *817 307 500 565 772#
+```
 
 Delete Nexus Channel Secured Link (All Accessory Links)
 ```python

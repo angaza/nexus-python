@@ -50,3 +50,16 @@ extended' protocol.
 Version 2.3.0 *(2021-8-26)*
 ----------------------------
 The ability to generate passthrough keycodes has been added.
+
+Version 3.0.0 *(2021-08-24)*
+----------------------------
+
+Introduce Nexus Channel Origin Command generation, as passthrough commands
+carried in 'full' protocol keycode messages. These commands are used to
+create secure Nexus Channel 'links' between controller and accessory
+devices. For more information, see: https://nexus.angaza.com/channel
+
+Version moved to 3.x.y as interleaving origin commands breaks
+backwards compatibility with 2.x.y in the nexus-embedded repository.
+
+
