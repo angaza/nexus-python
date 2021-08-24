@@ -11,7 +11,7 @@ class TestChannelOriginActions(TestCase):
         # last 1 truncated digit of decimal device ID is '2'
         self.accessory_nexus_id = 0x0102948372A4
         self.controller_sym_key = b'\xfe' * 8 + b'\xa2' * 8
-        self.controller_nexus_id = 0x120003827145  # '2' truncated
+        self.controller_nexus_id = 0x120003827145  # '5' truncated
         self.accessory_sym_key = b'\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6'
         self.accessory_command_count = 312
 

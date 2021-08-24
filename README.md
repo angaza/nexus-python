@@ -96,7 +96,7 @@ message = FactoryFullMessage.display_payg_id().to_keycode()
 
 #### Nexus Channel Origin Commands
 
-These commands generate commands that are accepted by [Nexus Channel](https://nexus.angaza.com/channel.html)
+These commands are accepted by [Nexus Channel](https://nexus.angaza.com/channel.html)
 "Controller" devices using the "Full Protocol". Typically, these are used
 to manage the secured link state of "Controller" and "Accessory" devices.
 
