@@ -384,8 +384,6 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
 
 class LinkCommandToken(ChannelOriginCommandToken):
 
-    _origin_command_type = OriginCommandType.LINK_ACCESSORY_MODE_3
-
     def __init__(
             self,
             type_,
