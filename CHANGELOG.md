@@ -33,11 +33,6 @@ be entered to allow another pump controller to be linked to the pump.
 Version 2.2.0 *(2021-03-23)*
 ----------------------------
 
-The ability to generate passthrough keycodes has been added.
-
-Version 2.3.0 *(2021-8-26)*
-----------------------------
-
 This version number updated to correspond with `NEXUS_GLOBAL_VERSION`
 package identifier.
 
@@ -51,3 +46,7 @@ in the 'small passthrough' message type.
 
 Introduce a "SET CREDIT + WIPE RESTRICTED FLAG" function in this 'small
 extended' protocol.
+
+Version 2.3.0 *(2021-8-26)*
+----------------------------
+The ability to generate passthrough keycodes has been added.
