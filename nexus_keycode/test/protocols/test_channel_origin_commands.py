@@ -51,7 +51,8 @@ class TestChannelOriginCommandToken(TestCase):
     atoken = protocol.ChannelOriginCommandToken(
         type_=protocol.OriginCommandType.UNLINK_ACCESSORY,  # 2
         body='12',
-        auth='554433'
+        auth='554433',
+        controller_command_count=45321 # arbitrary here
     )
 
     def test_str__simple_token__expected_value_returned(self):
@@ -65,6 +66,8 @@ class TestChannelOriginCommandToken(TestCase):
         self.assertIn(repr(self.atoken.type_code), repred)
         self.assertIn(repr(self.atoken.body), repred)
         self.assertIn(repr(self.atoken.auth), repred)
+        self.assertIn(repr(self.atoken.controller_command_count), repred)
+
 
     def test_to_digits__output_correct(self):
         # '212' obscured to '222'
@@ -117,7 +120,7 @@ class TestSpecificLinkedAccessoryToken(TestCase):
             protocol.SpecificLinkedAccessoryToken.unlink_specific_accessory(
                 self.accessory_nexus_id,
                 self.controller_command_count,
-                self.controller_sym_key
+                self.controller_sym_key,
             )
         )
         digits = token.to_digits()

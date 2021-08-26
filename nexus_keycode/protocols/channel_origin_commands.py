@@ -103,7 +103,7 @@ class ChannelOriginCommandToken(object):
     :see: :class:`LinkCommand`
     """
 
-    def __init__(self, type_, body, auth):
+    def __init__(self, type_, body, auth, controller_command_count):
         """
         :param type_: Type of origin command this token represents
         :type type_: :class:`OriginCommandType`
@@ -111,6 +111,8 @@ class ChannelOriginCommandToken(object):
         :type body: :class:`str`
         :param auth: arbitrary digits of auth field
         :type auth: :class:`str`
+        :param controller_command_count: full command count of controller (diagnostic)
+        :type controller_command_count: :class:`int`
         """
         if not isinstance(type_, OriginCommandType):
             raise TypeError("Must supply valid OriginCommandType.")
@@ -118,6 +120,8 @@ class ChannelOriginCommandToken(object):
         self.type_code = type_.value
         self.body = body
         self.auth = auth
+        # Diagnostic only, not included in transmitted message
+        self.controller_command_count = controller_command_count
 
     def __str__(self):
         return self.to_digits()
@@ -126,6 +130,7 @@ class ChannelOriginCommandToken(object):
         return (
             "{}.{}("
             "{type_code!r}, "
+            "{controller_command_count!r}, "
             "{body!r}, "
             "{auth!r},))").format(
             self.__class__.__module__,
@@ -172,12 +177,14 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
             self,
             type_,
             controller_command,
-            auth
+            auth,
+            controller_command_count
     ):
         super(GenericControllerActionToken, self).__init__(
             type_=self._origin_command_type,
             body=controller_command,
-            auth=self.digits_from_siphash(auth)
+            auth=self.digits_from_siphash(auth),
+            controller_command_count=controller_command_count
         )
 
     @enum.unique
@@ -231,7 +238,8 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
         return cls(
             type_=type_,
             controller_command="{:02d}".format(controller_command_value),
-            auth=auth
+            auth=auth,
+            controller_command_count=controller_command_count
         )
 
     @classmethod
@@ -252,7 +260,8 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
             self,
             type_,
             accessory_nexus_id,
-            auth
+            auth,
+            controller_command_count,
     ):
         # Truncated Nexus ID = least significant one decimal digits
         truncated_accessory_nexus_id = "{:01d}".format(
@@ -260,7 +269,8 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
         super(SpecificLinkedAccessoryToken, self).__init__(
             type_=type_,
             body=truncated_accessory_nexus_id,
-            auth=self.digits_from_siphash(auth)
+            auth=self.digits_from_siphash(auth),
+            controller_command_count=controller_command_count
         )
 
     @classmethod
@@ -328,7 +338,8 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
         return cls(
             type_=type_,
             accessory_nexus_id=accessory_nexus_id,
-            auth=auth
+            auth=auth,
+            controller_command_count=controller_command_count
         )
 
     @classmethod
@@ -336,7 +347,7 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
             cls,
             accessory_nexus_id,
             controller_command_count,
-            controller_sym_key
+            controller_sym_key,
     ):
         return cls._specific_accessory_builder(
             OriginCommandType.UNLINK_ACCESSORY,
@@ -352,12 +363,14 @@ class LinkCommandToken(ChannelOriginCommandToken):
             self,
             type_,
             body,
-            auth
+            auth,
+            controller_command_count,
     ):
         super(LinkCommandToken, self).__init__(
             type_=type_,
             body=body,
-            auth=auth)
+            auth=auth,
+            controller_command_count=controller_command_count)
 
     @classmethod
     def challenge_mode_3(
@@ -418,5 +431,6 @@ class LinkCommandToken(ChannelOriginCommandToken):
         return cls(
             type_=command_type,
             body=accessory_auth_digits,
-            auth=cls.digits_from_siphash(auth)
+            auth=cls.digits_from_siphash(auth),
+            controller_command_count=controller_command_count
         )
