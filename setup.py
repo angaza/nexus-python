@@ -7,7 +7,7 @@ setuptools.setup(
     name="nexus_keycode",
     packages=setuptools.find_packages(),
     license="MIT",
-    version="1.3.0",
+    version="1.4.0",
     author="Angaza, Inc.",
     author_email="iot@angaza.com",
     description="Angaza Nexus backend libraries for managing PAYG devices",
