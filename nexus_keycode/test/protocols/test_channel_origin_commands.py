@@ -29,50 +29,6 @@ class TestChannelOriginActions(TestCase):
         self.assertEqual(token.body, '00')
         self.assertEqual(token.auth, '018783')
 
-    def test_unlock_all_accessories_builder__ok(self):
-        token = (
-            protocol.ChannelOriginAction.UNLOCK_ALL_ACCESSORIES.build(
-                controller_command_count=self.controller_command_count,
-                controller_sym_key=self.controller_sym_key
-            )
-        )
-        digits = token.to_digits()
-        # '001' obscured to '034'
-        self.assertEqual(digits, '034906394')
-        self.assertEqual(token.type_code, 0)
-        self.assertEqual(token.body, '01')
-        self.assertEqual(token.auth, '906394')
-
-    def test_unlink_specific_accessory_builder__ok(self):
-        token = (
-            protocol.ChannelOriginAction.UNLINK_ACCESSORY.build(
-                accessory_nexus_id=self.accessory_nexus_id,
-                controller_command_count=self.controller_command_count,
-                controller_sym_key=self.controller_sym_key
-            )
-        )
-        digits = token.to_digits()
-        # '22' obscured to '88'
-        self.assertEqual(digits, '88325773')
-        self.assertEqual(token.type_code, 2)
-        self.assertEqual(token.body, '2')
-        self.assertEqual(token.auth, '325773')
-
-    def test_unlock_specific_accessory_builder__ok(self):
-        token = (
-            protocol.ChannelOriginAction.UNLOCK_ACCESSORY.build(
-                accessory_nexus_id=self.accessory_nexus_id,
-                controller_command_count=self.controller_command_count,
-                controller_sym_key=self.controller_sym_key
-            )
-        )
-        digits = token.to_digits()
-        # '12' obscured to '89'
-        self.assertEqual(digits, '89214226')
-        self.assertEqual(token.type_code, 1)
-        self.assertEqual(token.body, '2')
-        self.assertEqual(token.auth, '214226')
-
     def test_link_challenge_mode_3_builder__ok(self):
         token = (
             protocol.ChannelOriginAction.LINK_ACCESSORY_MODE_3.build(
@@ -149,26 +105,6 @@ class TestGenericControllerActionToken(TestCase):
         # Origin authentication for this command
         self.assertEqual(token.auth, '018783')
 
-    def test_unlock_all_accessories__ok(self):
-        token = (
-            protocol.GenericControllerActionToken.unlock_all_accessories(
-                self.controller_command_count,
-                self.controller_sym_key
-            )
-        )
-        digits = token.to_digits()
-        # '001' obscured to '034'
-        self.assertEqual(digits, '034906394')
-
-        # Interpreted as 'command type' by the Nexus Channel module in FW.
-        self.assertEqual(token.type_code, 0)
-
-        # Command ID
-        self.assertEqual(token.body, '01')
-
-        # Origin authentication for this command
-        self.assertEqual(token.auth, '906394')
-
 
 class TestSpecificLinkedAccessoryToken(TestCase):
     def setUp(self):
@@ -196,27 +132,6 @@ class TestSpecificLinkedAccessoryToken(TestCase):
 
         # Origin authentication for this command
         self.assertEqual(token.auth, '228427')
-
-    def test_unlock_specific_accessory_ok(self):
-        token = (
-            protocol.SpecificLinkedAccessoryToken.unlock_specific_accessory(
-                self.accessory_nexus_id,
-                self.controller_command_count,
-                self.controller_sym_key
-            )
-        )
-        digits = token.to_digits()
-        # '13' obscured to '62'
-        self.assertEqual(digits, '62046876')
-
-        # Interpreted as 'command type' by the Nexus Channel module in FW.
-        self.assertEqual(token.type_code, 1)
-
-        # Truncated accessory Nexus ID
-        self.assertEqual(token.body, '3')
-
-        # Origin authentication for this command
-        self.assertEqual(token.auth, '046876')
 
 
 class TestLinkCommandToken(TestCase):

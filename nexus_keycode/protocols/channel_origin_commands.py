@@ -33,10 +33,6 @@ class ChannelOriginAction(enum.Enum):
     """Business logic list of possible origin command actions."""
     # Delete all accessory links from a controller
     UNLINK_ALL_ACCESSORIES = object()
-    # Signal PAYG credit resource 'unlock' for all linked accessories (UNSUPPORTED)
-    UNLOCK_ALL_ACCESSORIES = object()
-    # Signal PAYG credit resource 'unlock' for one specific accessory (UNSUPPORTED)
-    UNLOCK_ACCESSORY = object()
     # Delete link to one specific accessory (UNSUPPORTED)
     UNLINK_ACCESSORY = object()
     # Create Nexus Channel secured link between controller and accessory
@@ -50,12 +46,6 @@ class ChannelOriginAction(enum.Enum):
         constructors = {
             cls.UNLINK_ALL_ACCESSORIES: (
                 GenericControllerActionToken.unlink_all_accessories
-            ),
-            cls.UNLOCK_ALL_ACCESSORIES: (
-                GenericControllerActionToken.unlock_all_accessories
-            ),
-            cls.UNLOCK_ACCESSORY: (
-                SpecificLinkedAccessoryToken.unlock_specific_accessory
             ),
             cls.UNLINK_ACCESSORY: (
                 SpecificLinkedAccessoryToken.unlink_specific_accessory
@@ -81,7 +71,7 @@ class OriginCommandType(enum.Enum):
     This enum should not be used/exposed outside of this module.
     """
     GENERIC_CONTROLLER_ACTION = 0
-    UNLOCK_ACCESSORY = 1
+    RESERVED = 1
     UNLINK_ACCESSORY = 2
     # 3-8 reserved
     LINK_ACCESSORY_MODE_3 = 9
@@ -256,18 +246,6 @@ class GenericControllerActionToken(ChannelOriginCommandToken):
             controller_sym_key,
         )
 
-    @classmethod
-    def unlock_all_accessories(
-        cls,
-        controller_command_count,
-        controller_sym_key
-    ):
-        return cls._generic_controller_action_builder(
-            cls.GenericControllerActionType.UNLOCK_ALL_ACCESSORIES,
-            controller_command_count,
-            controller_sym_key,
-        )
-
 
 class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
     def __init__(
@@ -362,20 +340,6 @@ class SpecificLinkedAccessoryToken(ChannelOriginCommandToken):
     ):
         return cls._specific_accessory_builder(
             OriginCommandType.UNLINK_ACCESSORY,
-            accessory_nexus_id,
-            controller_command_count,
-            controller_sym_key
-        )
-
-    @classmethod
-    def unlock_specific_accessory(
-            cls,
-            accessory_nexus_id,
-            controller_command_count,
-            controller_sym_key
-    ):
-        return cls._specific_accessory_builder(
-            OriginCommandType.UNLOCK_ACCESSORY,
             accessory_nexus_id,
             controller_command_count,
             controller_sym_key
