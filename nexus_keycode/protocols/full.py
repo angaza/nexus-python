@@ -9,7 +9,7 @@ from nexus_keycode.protocols.passthrough_uart import (
 )
 from nexus_keycode.protocols.utils import pseudorandom_bits
 
-NEXUS_MODULE_VERSION_STRING = "1.0.0"
+NEXUS_MODULE_VERSION_STRING = "1.4.0"
 NEXUS_INTEGRITY_CHECK_FIXED_00_KEY = b"\x00" * 16
 
 
