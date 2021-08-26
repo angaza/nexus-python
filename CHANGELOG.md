@@ -46,3 +46,7 @@ in the 'small passthrough' message type.
 
 Introduce a "SET CREDIT + WIPE RESTRICTED FLAG" function in this 'small
 extended' protocol.
+
+Version 2.3.0 *(2021-8-26)*
+----------------------------
+The ability to generate passthrough keycodes has been added.
