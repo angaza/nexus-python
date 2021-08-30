@@ -365,12 +365,28 @@ class LinkCommandToken(ChannelOriginCommandToken):
             body,
             auth,
             controller_command_count,
+            accessory_command_count,
     ):
+        # Diagnostic only, not included in transmitted message
+        self.accessory_command_count = accessory_command_count
+
         super(LinkCommandToken, self).__init__(
             type_=type_,
             body=body,
             auth=auth,
             controller_command_count=controller_command_count)
+
+    def __repr__(self):
+        return (
+            "{}.{}("
+            "{type_code!r}, "
+            "{controller_command_count!r}, "
+            "{accessory_command_count!r}, "
+            "{body!r}, "
+            "{auth!r},))").format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            **self.__dict__)
 
     @classmethod
     def challenge_mode_3(
@@ -432,5 +448,6 @@ class LinkCommandToken(ChannelOriginCommandToken):
             type_=command_type,
             body=accessory_auth_digits,
             auth=cls.digits_from_siphash(auth),
-            controller_command_count=controller_command_count
+            controller_command_count=controller_command_count,
+            accessory_command_count=accessory_command_count,
         )

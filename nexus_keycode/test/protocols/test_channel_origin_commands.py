@@ -52,7 +52,7 @@ class TestChannelOriginCommandToken(TestCase):
         type_=protocol.OriginCommandType.UNLINK_ACCESSORY,  # 2
         body='12',
         auth='554433',
-        controller_command_count=45321 # arbitrary here
+        controller_command_count=45321  # arbitrary here
     )
 
     def test_str__simple_token__expected_value_returned(self):
@@ -67,7 +67,6 @@ class TestChannelOriginCommandToken(TestCase):
         self.assertIn(repr(self.atoken.body), repred)
         self.assertIn(repr(self.atoken.auth), repred)
         self.assertIn(repr(self.atoken.controller_command_count), repred)
-
 
     def test_to_digits__output_correct(self):
         # '212' obscured to '222'
@@ -143,6 +142,26 @@ class TestLinkCommandToken(TestCase):
         self.controller_sym_key = b'\xfe' * 8 + b'\xa2' * 8
         self.controller_command_count = 15
         self.accessory_command_count = 2
+
+    def test_repr__challenge_mode_3__has_accessory_command_count(self):
+        token = protocol.LinkCommandToken.challenge_mode_3(
+            controller_command_count=self.controller_command_count,
+            accessory_command_count=self.accessory_command_count,
+            accessory_sym_key=self.accessory_sym_key,
+            controller_sym_key=self.controller_sym_key)
+
+        repred = repr(token)
+
+        self.assertIn("LinkCommandToken", repred)
+        self.assertIn(
+            "{}, {}, {}, '{}', '{}'".format(
+                token.type_code,
+                token.controller_command_count,
+                token.accessory_command_count,
+                token.body,
+                token.auth),
+            repred
+        )
 
     def test_challenge_mode_3__ok(self):
         token = protocol.LinkCommandToken.challenge_mode_3(
