@@ -93,6 +93,46 @@ message = FactoryFullMessage.display_payg_id().to_keycode()
 # outputs *634 776 5#
 ```
 
+
+#### Nexus Channel Origin Commands
+
+These commands are accepted by [Nexus Channel](https://nexus.angaza.com/channel.html)
+"Controller" devices using the "Full Protocol". Typically, these are used
+to manage the secured link state of "Controller" and "Accessory" devices.
+
+See also: `protocols/channel_origin_commands.py`
+
+Create Nexus Channel Secured Link
+```python
+from nexus_keycode.protocols.full import FactoryFullMessage
+from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
+
+message = FactoryFullMessage.passthrough_channel_origin_command(
+	ChannelOriginAction.LINK_ACCESSORY_MODE_3,
+    controller_command_count=5,
+    accessory_command_count=2,
+    accessory_sym_key=b"\xAB" * 16,
+    controller_sym_key=b"\xCD" * 16,
+)
+message.to_keycode()
+# outputs *817 307 500 565 772#
+```
+
+Delete Nexus Channel Secured Link (All Accessory Links)
+```python
+from nexus_keycode.protocols.full import FactoryFullMessage
+from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
+
+message = FactoryFullMessage.passthrough_channel_origin_command(
+	ChannelOriginAction.UNLINK_ALL_ACCESSORIES,
+    controller_command_count=7,
+    controller_sym_key=b"\xCD" * 16,
+)
+
+message.to_keycode()
+# outputs *810 023 592 81#
+```
+
 ### Small Protocol
 
 Add Credit

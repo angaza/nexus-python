@@ -60,6 +60,42 @@ def pseudorandom_bits(seed_bits, output_len):
     return output_bits[:output_len]
 
 
+def full_obscure(digits, sign=1, obscured_digit_count=8):
+    """Given a sequence of digits (0-9), obscure their ordering.
+
+    Assumes that the sequence of digits is at least 6 long, and the last
+    6 digits are the MAC. These digits will not be perturbed.
+
+    Uses a known set of pseudorandom bits to perform the operation
+    deterministically. This does not add any security to the sequence of
+    digits, but hides visually-identifiable patterns/structure within
+    the sequence."""
+    perturbed = list(map(int, list(digits)))
+
+    assert len(digits) >= 6
+    assert len(digits) == obscured_digit_count + 6
+
+    # MAC digits are last 6 of perturbed, use uint32_t value as seed
+    packed_check = bitstring.pack("uintle:32", int(digits[-6:]))
+
+    # [0, 255] values; one for each body digit
+    # 8 body digits, 8 bytes (8 bits each), so 64 bits of output required
+    pr_bits = pseudorandom_bits(packed_check, 64)
+
+    for (i, d) in enumerate(perturbed[:obscured_digit_count]):
+        # value [0, 255]
+        pr_value = pr_bits[i * 8 : (i * 8 + 8)].uint * sign
+        perturbed[i] += pr_value
+        perturbed[i] %= 10
+
+    return "".join(map(str, perturbed))
+
+
+def full_deobscure(digits, obscured_digit_count=8):
+    """Reverse a previous `full_obscure` pass performed on `digits`."""
+    return full_obscure(digits, sign=-1, obscured_digit_count=obscured_digit_count)
+
+
 def generate_mac(input_val, secret_key):
     """
     :type input_val: 'byte'

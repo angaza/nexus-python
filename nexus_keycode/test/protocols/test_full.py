@@ -1,6 +1,6 @@
 from unittest import TestCase
-
 import nexus_keycode.protocols.full as protocol
+from nexus_keycode.protocols.channel_origin_commands import ChannelOriginAction
 
 
 class TestBaseFullMessage(TestCase):
@@ -270,6 +270,23 @@ class TestFactoryFullMessage(TestCase):
         )
         self.assertEqual(msg.body, "")
         self.assertEqual("*634 776 5#", keycode)
+
+    def test_passthrough_channel_origin_command__link_command__result_matches(self):
+        msg = protocol.FactoryFullMessage.passthrough_channel_origin_command(
+            ChannelOriginAction.LINK_ACCESSORY_MODE_3,
+            controller_command_count=15,
+            accessory_command_count=2,
+            accessory_sym_key=b'\xc4\xb8@H\xcf\x04$\xa2]\xc5\xe9\xd3\xf0g@6',
+            controller_sym_key=b'\xfe' * 8 + b'\xa2' * 8
+        )
+        self.assertEqual(
+            msg.header,
+            "{:01d}".format(
+                protocol.FullMessageType.PASSTHROUGH_COMMAND.value))
+        # passthrough "Application ID" = 1 for Nexus Channel Origin Command
+        self.assertEqual(msg.body, '16815536632688')
+        # Adds leading '8' to indicate 'passthrough command'
+        self.assertEqual(msg.to_keycode(), "*816 815 536 632 688#")
 
     def test_passthrough_command__channel_command__expected(self):
         # Send an arbitrary PAYG_UART_PASSTHROUGH message
