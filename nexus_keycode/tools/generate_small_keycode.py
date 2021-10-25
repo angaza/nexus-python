@@ -11,13 +11,18 @@ VALID_MESSAGE_TYPES = ["SET", "UNLOCK", "ADD"]
 
 def create_small_credit_message(msg_id, msg_type, secret_key, days=None):
 
+    if msg_type not in VALID_MESSAGE_TYPES:
+        raise ValueError(
+            u"Invalid message type, supported values are {}".format(VALID_MESSAGE_TYPES)
+        )
+
     if msg_type == "SET":
-        msg = protocol.SetCreditSmallMessage(msg_id, days, key)
+        msg = protocol.SetCreditSmallMessage(msg_id, days, secret_key)
     elif msg_type == "ADD":
-        msg = protocol.AddCreditSmallMessage(msg_id, days, key)
+        msg = protocol.AddCreditSmallMessage(msg_id, days, secret_key)
     else:
         assert msg_type == "UNLOCK"
-        msg = protocol.AddCreditSmallMessage(msg_id, protocol.SmallMessage.UNLOCK_FLAG, key)
+        msg = protocol.AddCreditSmallMessage(msg_id, protocol.SmallMessage.UNLOCK_FLAG, secret_key)
     return msg
 
 
