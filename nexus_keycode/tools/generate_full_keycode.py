@@ -96,6 +96,6 @@ if __name__ == "__main__":
 
     print(
         ("{}\n" "Message Type={}\n" "Message ID={}\n" "Message Hours={}\n").format(
-            msg, msg_type, msg_id, hours
+            msg.to_keycode(), msg_type, msg_id, hours
         )
     )
