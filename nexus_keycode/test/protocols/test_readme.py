@@ -41,7 +41,7 @@ class TestREADME(TestCase):
 
     def test_oqc_test__full__ok(self):
         message = FactoryFullMessage.oqc_test()
-        self.assertEqual("*577 043 3#", message.to_keycode())
+        self.assertEqual("*500 060 694 509#", message.to_keycode())
 
     def test_factory_test__full__ok(self):
         message = FactoryFullMessage.allow_test()

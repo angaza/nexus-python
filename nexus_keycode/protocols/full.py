@@ -117,6 +117,8 @@ class BaseFullMessage(object):
         if self.is_factory is True:
             if self.body == "":
                 self.body_int = 0
+            else:
+                self.body_int = int(self.body)
             assert full_id == 0
             self.header = u"{0}".format(self.message_type.value)  # ignore full_id
 
@@ -352,17 +354,21 @@ class FactoryFullMessage(FullMessage):
         return cls(message_type=FullMessageType.FACTORY_ALLOW_TEST, body="")
 
     @classmethod
-    def oqc_test(cls):
-        """Provide 1 hour of credit (additive) up to 10 times per device.
+    def oqc_test(cls, num_min=60):
+        # type: (int)->FactoryFullMessage
+        """Provide :num_min of credit (additive) up to 10 times per device.
 
         Allows for factory and warehouse ongoing testing before sale.
 
-        Message contains no body.
-
+        :param num_min: int of minutes of credit to add to device.
         :return: Message object of format FACTORY_OQC_TEST
         :rtype: :class:`FactoryFullMessage`
         """
-        return cls(message_type=FullMessageType.FACTORY_OQC_TEST, body="")
+        if not isinstance(num_min, int):
+            raise TypeError("Expected num_min to be an instance of int but actual type was: {}.".format(type(num_min)))
+        if num_min < 1 or 99 < num_min:
+            raise ValueError("num_min must be between 1 and 99 but was: {}.".format(num_min))
+        return cls(message_type=FullMessageType.FACTORY_OQC_TEST, body="000{:02d}".format(num_min))
 
     @classmethod
     def display_payg_id(cls):

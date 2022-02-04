@@ -257,8 +257,8 @@ class TestFactoryFullMessage(TestCase):
             msg.header,
             u"{:01d}".format(protocol.FullMessageType.FACTORY_OQC_TEST.value),
         )
-        self.assertEqual(msg.body, "")
-        self.assertEqual("*577 043 3#", keycode)
+        self.assertEqual(msg.body, "00060")
+        self.assertEqual("*500 060 694 509#", keycode)
 
     def test_display_payg_id__verify_output__ok(self):
         msg = protocol.FactoryFullMessage.display_payg_id()
