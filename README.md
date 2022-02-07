@@ -78,7 +78,7 @@ message = FullMessage.wipe_state(
 Enabled/Disabled Test
 ```python
 message = FactoryFullMessage.oqc_test().to_keycode()
-# outputs *577 043 3#
+# outputs *500 060 694 509#
 ```
 
 Factory Test
