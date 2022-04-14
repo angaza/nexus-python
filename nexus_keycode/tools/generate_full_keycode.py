@@ -1,4 +1,4 @@
-# Small Nexus Keycode Protocol Credit Keycode Generator
+# Full Nexus Keycode Protocol Keycode Generator
 # Convenience script to generate keycodes 'on the fly' for testing/QA purposes.
 
 import argparse
@@ -54,11 +54,11 @@ if __name__ == "__main__":
         return decode_hex(secret_key)[0]
 
     argparser = argparse.ArgumentParser(
-        description="Generate credit keycodes for Nexus Keycode 'small' protocol.",
-        epilog="python generate_small_keycode.py -t ADD -i 0 -k abcdef0011223344556677889900ffee -d 30",
+        description="Generate credit keycodes for Nexus Keycode 'full' protocol.",
+        epilog="python generate_full_keycode.py -t ADD -i 0 -k abcdef0011223344556677889900ffee -hr 30",
     )
 
-    # Note: 'UNLOCK' is implemented as a special case of "ADD", but for the purposes of this tool they are considered separate 'types'.
+    # Note: 'UNLOCK' is implemented as a special case of "SET", but for the purposes of this tool they are considered separate 'types'.
     argparser.add_argument(
         "-t",
         "--message_type",
