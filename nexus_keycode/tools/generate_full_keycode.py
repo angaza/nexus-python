@@ -23,7 +23,7 @@ def create_full_credit_message(msg_id, msg_type, secret_key, hours=None):
     if msg_type == "UNLOCK":
         return protocol.FullMessage.unlock(msg_id, secret_key)
 
-    if not hours:
+    if hours is None:
         raise ValueError(
             u"Expected non-null `hours` argument for message type {}".format(msg_type)
         )
