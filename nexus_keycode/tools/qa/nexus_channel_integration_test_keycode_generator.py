@@ -1,6 +1,12 @@
 """
 Generates keycodes for Nexus Channel integration test plan v1.0.0:
 https://docs.google.com/spreadsheets/d/16Xqwv0GToPna8NplMlhTdjdKZ40POz6arU9yW4_S_Xo/edit
+
+To use,
+
+1. update data for devices under test in DEVICE DATA DEFINITION section below
+2. from this directory, `python nexus_channel_integration_test_keycode_generator.py`
+3. open the CSV that was generated
 """
 
 import csv
@@ -13,7 +19,7 @@ from nexus_keycode.tools.generate_full_keycode import (
     create_full_credit_message,
 )
 
-# device definitions; before running, update this section!
+# DEVICE DATA DEFINITION; before running, update this section!
 # WARNING: assumes that Nexus Keycode and Channel secret keys are identical!
 NXC_CONTROLLER_A = dict(
     nx_device_id=243456100, nxk_nxc_sym_key="\xaa" * 16, nxk_count=30, nxc_count=30

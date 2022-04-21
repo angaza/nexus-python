@@ -1,6 +1,12 @@
 """
 Generates keycodes for Nexus Keycode integration test plan v1.4.0:
 https://docs.google.com/spreadsheets/d/1gx3SrzXoCtfBLMxT6rKwwDRiCZt9yCa7SIYjoyuHug8/edit#gid=674470677
+
+To use,
+
+1. update data for devices under test in DEVICE DATA DEFINITION section below
+2. from this directory, `python nexus_keycode_integration_test_keycode_generator.py`
+3. open the CSV that was generated
 """
 
 import csv
@@ -8,7 +14,7 @@ import datetime
 
 from nexus_keycode.tools.generate_full_keycode import create_full_credit_message
 
-# device definitions; before running, update this section!
+# DEVICE DATA DEFINITION; before running, update this section!
 NX_KEYCODE_TEST_DEVICE = dict(
     nx_device_id=123456789, sym_key="\xaa" * 16, message_id=30
 )
